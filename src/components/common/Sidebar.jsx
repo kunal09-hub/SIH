@@ -100,7 +100,7 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
           </span>
         </div>
         <p className="text-center text-white/30 text-[10px]">
-          MineGuard AI • SIH Prototype
+          MineGuard AI • Made By Team PRAYOJANA
         </p>
       </div>
     </div>

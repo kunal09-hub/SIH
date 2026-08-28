@@ -4,8 +4,8 @@ import { Flame, ShieldCheck, User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [userId, setUserId] = useState('INS-001');
-  const [password, setPassword] = useState('Inspector@123');
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ export default function LoginPage() {
           </p>
           <div className="mt-3.5">
             <span className="inline-flex items-center text-[11px] px-3.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-mgBlue-600 font-medium tracking-wide shadow-sm">
-              SIH Prototype • Demo Data Mode
+              Made By Team PRAYOJANA
             </span>
           </div>
         </div>

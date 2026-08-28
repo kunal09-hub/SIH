@@ -4,13 +4,15 @@ import { DEMO_ACCOUNTS } from '../utils/seedData';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  // CRITICAL REQUIREMENT: Application start / load MUST ALWAYS default to null (LOGIN PAGE FIRST)
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    // Clear any previous persisted session on fresh launch to guarantee login screen first
-    localStorage.removeItem('mineguard_auth_user');
-  }, []);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('mineguard_auth_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      console.error('Error loading persisted auth user:', e);
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (currentUser) {
@@ -47,6 +49,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('mineguard_auth_user');
+    localStorage.removeItem('mineguard_current_tab');
   };
 
   return (

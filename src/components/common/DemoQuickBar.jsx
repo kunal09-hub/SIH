@@ -23,7 +23,7 @@ export default function DemoQuickBar() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-mgBlue-50 border border-mgBlue-100 rounded text-mgBlue-600 font-semibold text-[11px]">
             <Sparkles className="w-3 h-3" />
-            <span>SIH Prototype • Demo Data</span>
+            <span>Made By Team PRAYOJANA</span>
           </div>
 
           <button

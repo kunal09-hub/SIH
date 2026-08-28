@@ -22,18 +22,34 @@ import CorrectiveActionManager from './components/officer/CorrectiveActionManage
 // Management Views
 import ManagementDashboard from './components/management/ManagementDashboard';
 import MineComparisonTable from './components/management/MineComparisonTable';
+import RiskAnalyticsView from './components/management/RiskAnalyticsView';
 import ExecutiveReportView from './components/management/ExecutiveReportView';
 import MineDetailModal from './components/management/MineDetailModal';
 
 // Authority Views
 import RegulatoryDashboard from './components/authority/RegulatoryDashboard';
 import HighRiskMinesView from './components/authority/HighRiskMinesView';
+import DirectivesNoticesView from './components/authority/DirectivesNoticesView';
 import AuditTrailView from './components/authority/AuditTrailView';
 
 function MainApp() {
   const { currentUser } = useAuth();
   const { mines } = useData();
-  const [currentTab, setCurrentTab] = useState('dashboard');
+  const [currentTab, setCurrentTab] = useState(() => {
+    try {
+      return localStorage.getItem('mineguard_current_tab') || 'dashboard';
+    } catch (e) {
+      return 'dashboard';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('mineguard_current_tab', currentTab);
+    } catch (e) {
+      console.error('Error persisting current tab:', e);
+    }
+  }, [currentTab]);
   const [showQuickVerifier, setShowQuickVerifier] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedAuditMine, setSelectedAuditMine] = useState(null);
@@ -124,7 +140,7 @@ function MainApp() {
         case 'mines-compare':
           return <MineComparisonTable mines={mines} onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'risk-analytics':
-          return <ManagementDashboard onNavigate={(tab) => setCurrentTab(tab)} onSelectMine={(m) => setSelectedAuditMine(m)} />;
+          return <RiskAnalyticsView onNavigate={(tab) => setCurrentTab(tab)} onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'compliance-reports':
           return <ExecutiveReportView />;
         case 'audit-log':
@@ -141,7 +157,7 @@ function MainApp() {
         case 'high-risk':
           return <HighRiskMinesView onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'directives':
-          return <RegulatoryDashboard onNavigate={(tab) => setCurrentTab(tab)} />;
+          return <DirectivesNoticesView />;
         case 'audit-log':
           return <AuditTrailView />;
         case 'compliance-reports':
