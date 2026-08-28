@@ -139,7 +139,7 @@ function MainApp() {
         case 'dashboard':
           return <RegulatoryDashboard onNavigate={(tab) => setCurrentTab(tab)} />;
         case 'high-risk':
-          return <HighRiskMinesView />;
+          return <HighRiskMinesView onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'directives':
           return <RegulatoryDashboard onNavigate={(tab) => setCurrentTab(tab)} />;
         case 'audit-log':

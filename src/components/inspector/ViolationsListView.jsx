@@ -131,7 +131,7 @@ export default function ViolationsListView() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge size="sm">{v.status}</Badge>
-                  <span className="text-[11px] text-enterprise-text-muted font-mono">{formatDate(v.date)}</span>
+                  <span className="text-[11px] text-enterprise-text-muted font-mono">{formatDate(v.date || v.reportedDate)}</span>
                 </div>
               </div>
 

@@ -12,7 +12,7 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
   // Filter alerts relevant to current role
   const roleKey = currentUser?.role?.toLowerCase();
   const userAlerts = alerts.filter(a => !a.targetRoles || a.targetRoles.includes(roleKey));
-  const unreadCount = userAlerts.filter(a => a.status === 'UNREAD').length;
+  const unreadCount = userAlerts.filter(a => a.status === 'UNREAD' || a.isRead === false).length;
 
   return (
     <header className="bg-navy-800 px-4 sm:px-6 py-2.5 flex items-center justify-between z-30 sticky top-0 shadow-nav">
@@ -76,7 +76,7 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
                     <div 
                       key={alert.alertId}
                       onClick={() => markAlertRead(alert.alertId)}
-                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${alert.status === 'UNREAD' ? 'bg-mgBlue-50' : ''}`}
+                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${(alert.status === 'UNREAD' || alert.isRead === false) ? 'bg-mgBlue-50' : ''}`}
                     >
                       <div className="flex items-start gap-3">
                         {alert.severity === 'HIGH' || alert.severity === 'CRITICAL' ? (
@@ -86,8 +86,8 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-enterprise-text">{alert.title}</p>
-                          <p className="text-xs text-enterprise-text-secondary mt-0.5 leading-relaxed">{alert.description}</p>
-                          <p className="text-xs text-enterprise-text-muted mt-1 font-mono">{formatDateTime(alert.createdDate)}</p>
+                          <p className="text-xs text-enterprise-text-secondary mt-0.5 leading-relaxed">{alert.description || alert.message}</p>
+                          <p className="text-xs text-enterprise-text-muted mt-1 font-mono">{formatDateTime(alert.createdDate || alert.timestamp)}</p>
                         </div>
                       </div>
                     </div>

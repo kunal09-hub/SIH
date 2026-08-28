@@ -117,7 +117,7 @@ export default function InspectorDashboard({ onNavigate }) {
                     </div>
                     <p className="text-xs text-enterprise-text font-medium">{v.description}</p>
                     <div className="flex items-center gap-2 text-[10px] text-enterprise-text-muted font-mono">
-                      <span>Reported: {formatDate(v.date)}</span>
+                      <span>Reported: {formatDate(v.date || v.reportedDate)}</span>
                       <span>•</span>
                       <span className="text-mgAmber-600 font-semibold">AI Risk: {v.riskScore}/100</span>
                     </div>

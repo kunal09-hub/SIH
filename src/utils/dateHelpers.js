@@ -5,7 +5,14 @@ export function getTodayDateString() {
 }
 
 export function calculateCertificateStatus(expiryDateStr) {
-  if (!expiryDateStr) return 'UNKNOWN';
+  if (!expiryDateStr) {
+    return {
+      status: 'UNKNOWN',
+      badgeClass: 'bg-gray-100 text-gray-600 border-gray-200',
+      daysRemaining: 0,
+      label: 'Unknown'
+    };
+  }
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);

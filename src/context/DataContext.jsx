@@ -157,6 +157,7 @@ export function DataProvider({ children }) {
       ...violationData,
       violationId: newId,
       date: getTodayDateString(),
+      reportedDate: getTodayDateString(),
       status: 'OPEN',
       riskScore: aiRisk.score,
       riskLevel: aiRisk.level,

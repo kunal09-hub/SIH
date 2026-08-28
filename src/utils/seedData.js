@@ -1765,6 +1765,7 @@ export const DEMO_VIOLATIONS = [
     "certificateId": "CERT-2024-0012",
     "description": "Electrician Rahul Patil (W-10001) observed on duty in North Shaft with expired Electrical Competency Certificate (Expired 15-Aug-2026).",
     "reportedBy": "Anita Kulkarni (INS-001)",
+    "date": "2026-08-26",
     "reportedDate": "2026-08-26",
     "status": "OPEN",
     "evidence": "evidence_cert_scan_001.jpg",
@@ -1785,6 +1786,7 @@ export const DEMO_VIOLATIONS = [
     "workerName": "Rohan Pawar",
     "description": "Heavy dumper D-08 reverse safety alarm non-functional during workshop inspection.",
     "reportedBy": "Anita Kulkarni (INS-001)",
+    "date": "2026-08-20",
     "reportedDate": "2026-08-20",
     "status": "OPEN",
     "evidence": "dumper_alarm_defect.jpg",
@@ -1805,6 +1807,7 @@ export const DEMO_VIOLATIONS = [
     "workerName": "Sameer Pawar",
     "description": "Deep shaft continuous methane monitoring sensor calibration overdue by 45 days.",
     "reportedBy": "Anita Kulkarni (INS-001)",
+    "date": "2026-08-18",
     "reportedDate": "2026-08-18",
     "status": "OPEN",
     "evidence": "methane_sensor_log.pdf",
@@ -1849,23 +1852,35 @@ export const DEMO_CORRECTIVE_ACTIONS = [
 export const DEMO_ALERTS = [
   {
     "alertId": "ALT-101",
+    "type": "VIOLATION_REPORTED",
     "mineId": "MINE-01",
     "violationId": "VIO-2026-001",
+    "relatedEntity": "VIO-2026-001",
     "title": "High Risk Violation Reported",
+    "description": "High risk compliance breach (Score 86/100) reported in Demo Mine Alpha (North Shaft). Action required.",
     "message": "High risk compliance breach (Score 86/100) reported in Demo Mine Alpha (North Shaft). Action required.",
     "severity": "HIGH",
+    "createdDate": "2026-08-26T14:32:10.000Z",
     "timestamp": "2026-08-26 14:32:10",
-    "isRead": false
+    "status": "UNREAD",
+    "isRead": false,
+    "targetRoles": ["officer", "management", "authority", "inspector"]
   },
   {
     "alertId": "ALT-102",
+    "type": "VIOLATION_REPORTED",
     "mineId": "MINE-03",
     "violationId": "VIO-2026-003",
+    "relatedEntity": "VIO-2026-003",
     "title": "Critical Ventilation Safety Hazard",
+    "description": "Critical safety breach (Score 92/100) flagged in Demo Mine Gamma. Sensor calibration overdue.",
     "message": "Critical safety breach (Score 92/100) flagged in Demo Mine Gamma. Sensor calibration overdue.",
     "severity": "CRITICAL",
+    "createdDate": "2026-08-18T11:15:00.000Z",
     "timestamp": "2026-08-18 11:15:00",
-    "isRead": false
+    "status": "UNREAD",
+    "isRead": false,
+    "targetRoles": ["officer", "management", "authority", "inspector"]
   }
 ];
 
