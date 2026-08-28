@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-enterprise-bg text-enterprise-text font-sans;
+  }
+}
+
+/* Custom scrollbars - Professional Light Theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f2f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c4c9d1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Enterprise utility classes */
+.mg-card {
+  @apply bg-white rounded-lg border border-enterprise-border shadow-card;
+}
+
+.mg-card-hover {
+  @apply bg-white rounded-lg border border-enterprise-border shadow-card hover:shadow-card-hover transition-shadow duration-200;
+}
+
+.mg-section-title {
+  @apply text-sm font-bold text-enterprise-text uppercase tracking-wider;
+}
+
+.mg-btn-primary {
+  @apply px-4 py-2.5 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-semibold text-sm rounded-lg transition-colors;
+}
+
+.mg-btn-secondary {
+  @apply px-4 py-2.5 bg-white hover:bg-gray-50 text-enterprise-text font-semibold text-sm rounded-lg border border-enterprise-border transition-colors;
+}
+
+.mg-input {
+  @apply w-full px-3 py-2.5 bg-white border border-enterprise-border rounded-lg text-sm text-enterprise-text placeholder-enterprise-text-muted focus:outline-none focus:ring-2 focus:ring-mgBlue-500 focus:border-mgBlue-500 transition-colors;
+}
+
+.mg-select {
+  @apply w-full px-3 py-2.5 bg-white border border-enterprise-border rounded-lg text-sm text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500 focus:border-mgBlue-500 transition-colors;
+}
+
+.mg-label {
+  @apply block text-sm font-medium text-enterprise-text mb-1.5;
+}
