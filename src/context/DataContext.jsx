@@ -12,6 +12,7 @@ import {
 } from '../utils/seedData';
 import { calculateCertificateStatus, getTodayDateString } from '../utils/dateHelpers';
 import { evaluateRisk } from '../utils/aiRiskEngine';
+import { sosRealtimeService } from '../services/sosService';
 
 const DataContext = createContext();
 
@@ -61,8 +62,46 @@ export function DataProvider({ children }) {
     localStorage.setItem(STORAGE_KEY_PREFIX + 'sosAlerts', JSON.stringify(sosAlerts));
   }, [mines, workers, certificates, inspections, violations, alerts, correctiveActions, auditTrail, sosAlerts]);
 
-  // Real-Time Cross-Tab / Window Broadcast Listener for SOS Emergencies
+  // Real-Time Cross-Tab / Window & Supabase Cloud Realtime Listener for SOS Emergencies
   useEffect(() => {
+    // 1. Supabase Cloud Realtime Stream (Cross-Laptop & Cross-Device Delivery)
+    const unsubscribeSupabase = sosRealtimeService.subscribeToIncomingSOS({
+      onNewSOS: (newCloudAlert) => {
+        setSosAlerts(prev => {
+          if (prev.some(a => a.alertId === newCloudAlert.alertId)) return prev;
+          return [newCloudAlert, ...prev];
+        });
+
+        // Push into general critical alerts feed
+        setAlerts(prev => [
+          {
+            alertId: `ALT-${Date.now().toString().slice(-4)}`,
+            type: 'EMERGENCY_SOS',
+            severity: 'CRITICAL',
+            title: `🚨 EMERGENCY SOS: ${newCloudAlert.mineName}`,
+            description: `Critical emergency alert dispatched by Inspector ${newCloudAlert.inspectorName} (${newCloudAlert.inspectorId}) in ${newCloudAlert.mineName}.`,
+            message: `Emergency SOS triggered by Inspector ${newCloudAlert.inspectorName} in ${newCloudAlert.mineName}.`,
+            relatedEntity: newCloudAlert.alertId,
+            mineId: newCloudAlert.mineId || 'MINE-01',
+            createdDate: new Date().toISOString(),
+            timestamp: newCloudAlert.displayTime || new Date().toLocaleTimeString('en-GB'),
+            status: 'UNREAD',
+            isRead: false,
+            targetRoles: ['officer', 'management', 'authority']
+          },
+          ...prev
+        ]);
+      },
+      onUpdateSOS: (updatedCloudAlert) => {
+        setSosAlerts(prev => prev.map(a => 
+          (a.alertId === updatedCloudAlert.alertId || a.dbId === updatedCloudAlert.dbId)
+            ? { ...a, ...updatedCloudAlert }
+            : a
+        ));
+      }
+    });
+
+    // 2. BroadcastChannel for same-device cross-tab communication
     const handleBroadcast = (event) => {
       if (!event.data) return;
       if (event.data.type === 'SOS_TRIGGERED' && event.data.alert) {
@@ -94,6 +133,7 @@ export function DataProvider({ children }) {
     window.addEventListener('storage', handleStorage);
 
     return () => {
+      if (unsubscribeSupabase) unsubscribeSupabase();
       if (sosBroadcastChannel) {
         sosBroadcastChannel.removeEventListener('message', handleBroadcast);
       }
@@ -484,12 +524,12 @@ export function DataProvider({ children }) {
     setAuditTrail(prev => [newEntry, ...prev]);
   };
 
-  // Send Emergency SOS Alert (Triggered by Inspector)
+  // Send Emergency SOS Alert (Triggered by Inspector -> Supabase Realtime Cloud)
   const sendSOSAlert = (sosData) => {
     const now = new Date();
     const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     
-    const alertId = `SOS-${now.getFullYear()}-${Date.now().toString().slice(-4)}`;
+    const alertId = sosData.alertId || `SOS-${now.getFullYear()}-${Date.now().toString().slice(-4)}`;
     const newAlert = {
       alertId,
       alertType: 'SOS',
@@ -498,7 +538,7 @@ export function DataProvider({ children }) {
       mineId: sosData.mineId || 'MINE-01',
       mineName: sosData.mineName || 'Demo Mine Alpha',
       zoneName: sosData.zoneName || 'Active Underground Working Area',
-      location: sosData.location || `${sosData.mineName || 'Demo Mine Alpha'} (Underground North Shaft)`,
+      location: sosData.location || `${sosData.mineName || 'Demo Mine Alpha'} (${sosData.zoneName || 'North Shaft'})`,
       timestamp: now.toISOString(),
       displayTime: timeStr,
       status: 'ACTIVE',
@@ -535,7 +575,17 @@ export function DataProvider({ children }) {
       newAlert.mineId
     );
 
-    // Cross-tab / WebSocket real-time broadcast
+    // Cross-Laptop / Cross-Device Cloud Dispatch via Supabase Realtime
+    sosRealtimeService.dispatchSOS({
+      inspectorId: newAlert.inspectorId,
+      inspectorName: newAlert.inspectorName,
+      mineId: newAlert.mineId,
+      mineName: newAlert.mineName,
+      zoneName: newAlert.zoneName,
+      notes: newAlert.notes
+    }).catch(err => console.warn('Supabase Realtime SOS dispatch notice:', err));
+
+    // Local BroadcastChannel for same-laptop tabs
     if (sosBroadcastChannel) {
       sosBroadcastChannel.postMessage({ type: 'SOS_TRIGGERED', alert: newAlert });
     }
@@ -550,7 +600,7 @@ export function DataProvider({ children }) {
 
     let targetMine = 'MINE-01';
     setSosAlerts(prev => prev.map(a => {
-      if (a.alertId === alertId) {
+      if (a.alertId === alertId || a.dbId === alertId) {
         targetMine = a.mineId;
         const triggerTime = new Date(a.timestamp).getTime();
         const diffSec = Math.max(1, Math.round((now.getTime() - triggerTime) / 1000));
@@ -574,6 +624,13 @@ export function DataProvider({ children }) {
       targetMine
     );
 
+    // Synchronize to Supabase Realtime Cloud
+    sosRealtimeService.acknowledgeSOS(alertId, {
+      actorName: acknowledgedBy,
+      actorRole: acknowledgedRole
+    }).catch(err => console.warn('Supabase Realtime acknowledge sync notice:', err));
+
+    // Broadcast across same-laptop tabs
     if (sosBroadcastChannel) {
       sosBroadcastChannel.postMessage({
         type: 'SOS_ACKNOWLEDGED',
