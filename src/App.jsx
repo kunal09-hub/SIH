@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
+import { OfflineProvider, useOffline } from './context/OfflineContext';
+import { WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import LoginPage from './components/auth/LoginPage';
 import DemoQuickBar from './components/common/DemoQuickBar';
 import Navbar from './components/common/Navbar';
@@ -32,9 +34,15 @@ import HighRiskMinesView from './components/authority/HighRiskMinesView';
 import DirectivesNoticesView from './components/authority/DirectivesNoticesView';
 import AuditTrailView from './components/authority/AuditTrailView';
 
+// SOS Emergency Alert Components
+import InspectorSOSButton from './components/inspector/InspectorSOSButton';
+import EmergencySOSOverlay from './components/officer/EmergencySOSOverlay';
+import SOSHistoryView from './components/officer/SOSHistoryView';
+
 function MainApp() {
   const { currentUser } = useAuth();
   const { mines } = useData();
+  const { lastNotification, dismissNotification } = useOffline();
   const [currentTab, setCurrentTab] = useState(() => {
     try {
       return localStorage.getItem('mineguard_current_tab') || 'dashboard';
@@ -57,9 +65,9 @@ function MainApp() {
   // Role Authorization Guard Map
   const roleAllowedTabs = {
     INSPECTOR: ['dashboard', 'inspections', 'verify-cert', 'violations', 'verifications'],
-    OFFICER: ['dashboard', 'workers', 'certificates', 'actions', 'violations', 'inspections-log'],
-    MANAGEMENT: ['dashboard', 'mines-compare', 'risk-analytics', 'compliance-reports', 'audit-log'],
-    AUTHORITY: ['dashboard', 'high-risk', 'directives', 'audit-log', 'compliance-reports']
+    OFFICER: ['dashboard', 'workers', 'certificates', 'actions', 'violations', 'sos-history', 'inspections-log'],
+    MANAGEMENT: ['dashboard', 'mines-compare', 'risk-analytics', 'compliance-reports', 'sos-history', 'audit-log'],
+    AUTHORITY: ['dashboard', 'high-risk', 'directives', 'sos-history', 'audit-log', 'compliance-reports']
   };
 
   // Reset tab when user role changes or when unauthorized tab is selected
@@ -118,6 +126,8 @@ function MainApp() {
       switch (currentTab) {
         case 'dashboard':
           return <OfficerDashboard onNavigate={(tab) => setCurrentTab(tab)} />;
+        case 'sos-history':
+          return <SOSHistoryView />;
         case 'workers':
           return <WorkerRegistry />;
         case 'certificates':
@@ -137,6 +147,8 @@ function MainApp() {
       switch (currentTab) {
         case 'dashboard':
           return <ManagementDashboard onNavigate={(tab) => setCurrentTab(tab)} onSelectMine={(m) => setSelectedAuditMine(m)} />;
+        case 'sos-history':
+          return <SOSHistoryView />;
         case 'mines-compare':
           return <MineComparisonTable mines={mines} onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'risk-analytics':
@@ -154,6 +166,8 @@ function MainApp() {
       switch (currentTab) {
         case 'dashboard':
           return <RegulatoryDashboard onNavigate={(tab) => setCurrentTab(tab)} />;
+        case 'sos-history':
+          return <SOSHistoryView />;
         case 'high-risk':
           return <HighRiskMinesView onSelectMine={(m) => setSelectedAuditMine(m)} />;
         case 'directives':
@@ -174,6 +188,34 @@ function MainApp() {
     <div className="min-h-screen bg-enterprise-bg flex flex-col font-sans text-enterprise-text overflow-x-hidden">
       {/* 1. Quick Demo Bar */}
       <DemoQuickBar />
+
+      {/* 1b. Offline Connectivity Notification Banner */}
+      {lastNotification && (
+        <div className={`px-4 py-2 text-xs font-semibold flex items-center justify-between transition-all border-b shadow-sm ${
+          lastNotification.type === 'warning'
+            ? 'bg-amber-50 border-amber-200 text-amber-800'
+            : lastNotification.type === 'info'
+            ? 'bg-blue-50 border-blue-200 text-mgBlue-800'
+            : 'bg-emerald-50 border-green-200 text-mgGreen-800'
+        }`}>
+          <div className="flex items-center gap-2">
+            {lastNotification.type === 'warning' ? (
+              <WifiOff className="w-4 h-4 text-amber-600 shrink-0" />
+            ) : lastNotification.type === 'info' ? (
+              <RefreshCw className="w-4 h-4 text-mgBlue-600 animate-spin shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-mgGreen-600 shrink-0" />
+            )}
+            <span>{lastNotification.message}</span>
+          </div>
+          <button
+            onClick={dismissNotification}
+            className="text-gray-400 hover:text-gray-700 font-bold px-2 py-0.5 text-xs rounded"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 2. Top Header / Navbar */}
       <Navbar 
@@ -198,6 +240,12 @@ function MainApp() {
         </main>
       </div>
 
+      {/* 4. Real-Time Floating Inspector SOS Emergency Button (Inspector View Only) */}
+      <InspectorSOSButton />
+
+      {/* 5. Real-Time Full-Screen Emergency Alarm Popup Overlay (Officer / Management / Authority) */}
+      <EmergencySOSOverlay />
+
       {/* Audit Mine Modal if triggered */}
       {selectedAuditMine && (
         <MineDetailModal
@@ -214,7 +262,9 @@ export default function App() {
   return (
     <AuthProvider>
       <DataProvider>
-        <MainApp />
+        <OfflineProvider>
+          <MainApp />
+        </OfflineProvider>
       </DataProvider>
     </AuthProvider>
   );

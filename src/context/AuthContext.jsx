@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
     }
   }, [currentUser]);
 
-  const login = (inputIdentifier, password) => {
+  const login = (inputIdentifier, password, selectedRole = '', selectedMine = '') => {
     if (!inputIdentifier || !password) {
       return { success: false, message: 'Please enter both login ID/email and password.' };
     }
@@ -39,6 +39,12 @@ export function AuthProvider({ children }) {
     });
 
     if (found) {
+      if (selectedRole && selectedRole !== 'ALL' && found.role !== selectedRole) {
+        return { 
+          success: false, 
+          message: `Role mismatch: This account has the role "${found.role}", but "${selectedRole}" was selected.` 
+        };
+      }
       setCurrentUser(found);
       return { success: true, user: found };
     }

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { RefreshCw, HelpCircle, Sparkles } from 'lucide-react';
 import DemoGuideModal from './DemoGuideModal';
+import OfflineSyncStatusBadge from './OfflineSyncStatusBadge';
 
 export default function DemoQuickBar() {
   const { currentUser } = useAuth();
@@ -35,8 +36,10 @@ export default function DemoQuickBar() {
           </button>
         </div>
 
-        {/* Right: Reset Demo Data */}
-        <div className="flex items-center gap-2">
+        {/* Right: Offline Indicator & Reset Demo Data */}
+        <div className="flex items-center gap-3">
+          <OfflineSyncStatusBadge />
+          
           <button
             onClick={handleReset}
             className="flex items-center gap-1 px-2 py-0.5 text-enterprise-text-muted hover:text-mgRed-600 font-medium transition-colors text-[11px]"

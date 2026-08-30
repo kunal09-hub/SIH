@@ -4,16 +4,19 @@ import { useAuth } from '../../context/AuthContext';
 import StatCard from '../common/StatCard';
 import Badge from '../common/Badge';
 import { formatDate, calculateCertificateStatus } from '../../utils/dateHelpers';
-import { LayoutDashboard, Users, FileCheck, ShieldAlert, AlertTriangle, ArrowRight, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, ShieldAlert, AlertTriangle, ArrowRight, Plus, Siren, CheckCircle2 } from 'lucide-react';
 import AddCertificateModal from './AddCertificateModal';
 import CreateActionModal from './CreateActionModal';
 
 export default function OfficerDashboard({ onNavigate }) {
-  const { mines, workers, certificates, violations, correctiveActions } = useData();
+  const { mines, workers, certificates, violations, correctiveActions, sosAlerts, acknowledgeSOSAlert } = useData();
   const { currentUser } = useAuth();
   const [showAddCertModal, setShowAddCertModal] = useState(false);
   const [selectedViolationForAction, setSelectedViolationForAction] = useState(null);
   const [targetCertUpload, setTargetCertUpload] = useState({});
+
+  // Active SOS alert for this Mine Officer
+  const activeSOS = (sosAlerts || []).find(a => a.status === 'ACTIVE');
 
   // Focus on Mine Alpha (Officer's assigned mine)
   const currentMineId = currentUser?.mineId || 'MINE-01';
@@ -42,11 +45,58 @@ export default function OfficerDashboard({ onNavigate }) {
 
   return (
     <div className="space-y-6">
+      {/* Active Priority-1 Emergency SOS Banner */}
+      {activeSOS && (
+        <div className="p-4 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-2xl shadow-xl shadow-red-600/25 border-2 border-red-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Siren className="w-6 h-6 text-white animate-bounce" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold bg-black/40 px-2 py-0.5 rounded border border-white/20 uppercase">
+                  🚨 ACTIVE EMERGENCY SOS
+                </span>
+                <span className="text-xs font-mono font-bold text-red-100">{activeSOS.alertId}</span>
+              </div>
+              <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                Distress Signal Dispatched by Inspector {activeSOS.inspectorName} ({activeSOS.mineName})
+              </h3>
+              <p className="text-xs text-red-100 mt-0.5 font-mono">
+                Location: {activeSOS.zoneName || 'Underground Working Section'} • Time: {activeSOS.displayTime || 'Active Now'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              onClick={() => onNavigate('sos-history')}
+              className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              View SOS Log
+            </button>
+            <button
+              onClick={() => {
+                acknowledgeSOSAlert(
+                  activeSOS.alertId,
+                  `${currentUser.name} (${currentUser.userId || currentUser.badge})`,
+                  currentUser.role
+                );
+              }}
+              className="px-4 py-2 bg-white text-red-700 hover:bg-red-50 text-xs font-black rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <CheckCircle2 className="w-4 h-4 text-red-600" />
+              <span>Acknowledge SOS</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
         <div>
           <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <span>Mine Safety & Compliance Command</span>
+            <span>Mine Safety &amp; Compliance Command</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-mgBlue-100 text-mgBlue-600 border border-blue-200 font-mono font-bold">
               {myMine.mineName}
             </span>

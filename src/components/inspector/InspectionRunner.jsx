@@ -1,21 +1,49 @@
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { ClipboardCheck, CheckCircle2, XCircle, MinusCircle, AlertTriangle, Send } from 'lucide-react';
+import { useOffline } from '../../context/OfflineContext';
+import { 
+  ClipboardCheck, 
+  CheckCircle2, 
+  XCircle, 
+  MinusCircle, 
+  AlertTriangle, 
+  Send, 
+  WifiOff, 
+  Wifi, 
+  Camera, 
+  Image as ImageIcon, 
+  Trash2, 
+  MapPin, 
+  HardDrive,
+  RefreshCw
+} from 'lucide-react';
 import ReportViolationModal from './ReportViolationModal';
 
 export default function InspectionRunner({ onComplete }) {
   const { mines, workers, certificates, createInspection } = useData();
   const { currentUser } = useAuth();
+  const { isOnline, saveInspectionLocally, toggleSimulatedOffline, syncNow, syncStatus } = useOffline();
 
   const [mineId, setMineId] = useState('MINE-01');
   const selectedMine = mines.find(m => m.mineId === mineId) || mines[0];
   const [area, setArea] = useState(selectedMine?.zones?.[0]?.zoneName || 'North Shaft');
   const [inspectionType, setInspectionType] = useState('Electrical & Personnel Compliance Safety Inspection');
   const [generalNotes, setGeneralNotes] = useState('');
+  const [photos, setPhotos] = useState([
+    {
+      id: 'photo-seed-1',
+      name: 'substation_switchgear_isolation.jpg',
+      size: '1.4 MB',
+      previewUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=400&auto=format&fit=crop&q=60',
+      gpsLocation: { latitude: 23.7957, longitude: 86.4304 },
+      savedOffline: true
+    }
+  ]);
   const [showViolationModal, setShowViolationModal] = useState(false);
   const [submittedInspection, setSubmittedInspection] = useState(null);
   const [inspectionSuccessMsg, setInspectionSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update area when mineId changes
   const handleMineChange = (newMineId) => {
@@ -53,12 +81,40 @@ export default function InspectionRunner({ onComplete }) {
     setChecklist(prev => prev.map(item => item.id === id ? { ...item, notes } : item));
   };
 
+  // Handle Photo Attachments (Stored in IndexedDB)
+  const handlePhotoCapture = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      const previewUrl = URL.createObjectURL(file);
+      const newPhoto = {
+        id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        file,
+        name: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        type: file.type,
+        previewUrl,
+        gpsLocation: { latitude: 23.7957, longitude: 86.4304 },
+        savedOffline: true
+      };
+
+      setPhotos(prev => [...prev, newPhoto]);
+    });
+  };
+
+  const removePhoto = (photoId) => {
+    setPhotos(prev => prev.filter(p => p.id !== photoId));
+  };
+
   const hasFailures = checklist.some(item => item.status === 'FAIL');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     const overallResult = hasFailures ? 'FAILED' : 'PASSED';
-    const newInsp = createInspection({
+    const payload = {
       mineId,
       mineName: selectedMine?.mineName || 'Demo Mine Alpha',
       area,
@@ -66,16 +122,35 @@ export default function InspectionRunner({ onComplete }) {
       checklistResults: checklist,
       overallResult,
       notes: generalNotes || (hasFailures ? 'Inspection logged compliance failures requiring immediate rectification.' : 'All statutory safety parameters verified in nominal condition.'),
-      evidence: 'evidence_field_inspection_01.jpg',
-      inspectorId: currentUser?.userId || 'inspector01',
-      inspectorName: currentUser?.name || 'Rajesh Kumar',
-    }, currentUser?.name);
+      evidence: photos.length > 0 ? photos.map(p => p.name).join(', ') : 'evidence_field_inspection.jpg',
+      photosCount: photos.length,
+      inspectorId: currentUser?.userId || 'INS-001',
+      inspectorName: currentUser?.name || 'Anita Kulkarni',
+      syncStatus: isOnline ? 'SYNCED' : 'PENDING'
+    };
 
+    if (!isOnline) {
+      // Offline-First Submission: Store in IndexedDB
+      const savedRecord = await saveInspectionLocally(payload, photos);
+      setSubmittedInspection(savedRecord);
+      setInspectionSuccessMsg(`💾 Inspection saved on device (${savedRecord.localId}) with ${photos.length} photos. It will synchronize automatically when network connectivity returns.`);
+      setIsSubmitting(false);
+
+      if (hasFailures) {
+        setShowViolationModal(true);
+      }
+      return;
+    }
+
+    // Online Submission: Standard DataContext pipeline
+    const newInsp = createInspection(payload, currentUser?.name);
     setSubmittedInspection(newInsp);
+    setIsSubmitting(false);
+
     if (hasFailures) {
       setShowViolationModal(true);
     } else {
-      setInspectionSuccessMsg(`Inspection ${newInsp.inspectionId} submitted successfully with 100% PASS score.`);
+      setInspectionSuccessMsg(`Inspection ${newInsp.inspectionId} submitted successfully to central database.`);
     }
   };
 
@@ -83,30 +158,53 @@ export default function InspectionRunner({ onComplete }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-enterprise-border">
+      {/* Header with Connectivity Status */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
         <div>
           <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
             <ClipboardCheck className="w-5 h-5 text-mgAmber-600" />
             <span>Digital Field Safety Inspection Runner</span>
           </h2>
           <p className="text-xs text-enterprise-text-muted mt-1">
-            Standard Operating Procedure (SOP) safety & compliance evaluation checklist
+            Standard Operating Procedure (SOP) safety & compliance evaluation checklist • Offline-First Enabled
           </p>
+        </div>
+
+        {/* Live Network & Storage Status Pill */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={toggleSimulatedOffline}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              isOnline 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
+                : 'bg-red-50 text-red-700 border-red-300 animate-pulse'
+            }`}
+            title="Click to toggle simulated offline mode for testing"
+          >
+            {isOnline ? <Wifi className="w-3.5 h-3.5 text-emerald-600" /> : <WifiOff className="w-3.5 h-3.5 text-red-600" />}
+            <span>{isOnline ? '🟢 Online Mode' : '🔴 Offline Mode (IndexedDB Active)'}</span>
+          </button>
         </div>
       </div>
 
+      {/* Success Notification Banner */}
       {inspectionSuccessMsg && (
-        <div className="p-4 bg-mgGreen-50 border border-green-200 rounded-lg flex items-center justify-between gap-3 text-xs text-mgGreen-600">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-mgGreen-600 shrink-0" />
-            <span className="font-semibold">{inspectionSuccessMsg}</span>
+        <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center justify-between gap-3 text-xs text-emerald-800 shadow-sm animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-emerald-900">Submission Recorded</p>
+              <p className="text-[11px] text-emerald-700 mt-0.5">{inspectionSuccessMsg}</p>
+            </div>
           </div>
           <button
             onClick={() => {
               setInspectionSuccessMsg('');
               if (onComplete) onComplete();
             }}
-            className="px-3 py-1.5 bg-mgGreen-600 hover:bg-green-600 text-white font-bold rounded-lg transition-colors"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors cursor-pointer shrink-0"
           >
             Done
           </button>
@@ -250,8 +348,78 @@ export default function InspectionRunner({ onComplete }) {
           </div>
         </div>
 
+        {/* Evidence Photos Section (IndexedDB Offline Support) */}
+        <div className="mg-card p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-enterprise-border pb-3">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-enterprise-text flex items-center gap-2">
+                <Camera className="w-4 h-4 text-mgBlue-600" />
+                <span>Field Evidence Photos ({photos.length} Captured)</span>
+              </h3>
+              <p className="text-[11px] text-enterprise-text-muted mt-0.5">
+                Photographs stored in browser IndexedDB while offline; automatically uploaded upon sync
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer shadow-sm transition-all self-start sm:self-auto">
+              <Camera className="w-3.5 h-3.5" />
+              <span>Capture / Add Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                capture="environment"
+                onChange={handlePhotoCapture}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* Photo Gallery Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+            {photos.map((photo) => (
+              <div 
+                key={photo.id}
+                className="group relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden p-2.5 space-y-2 hover:border-mgBlue-400 transition-all shadow-2xs"
+              >
+                {/* Photo Thumbnail */}
+                <div className="h-28 w-full bg-slate-200 rounded-xl overflow-hidden relative">
+                  <img
+                    src={photo.previewUrl}
+                    alt={photo.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>Photo saved offline ✓</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(photo.id)}
+                    className="absolute top-2 right-2 w-6 h-6 bg-red-600/90 text-white rounded-full flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity"
+                    title="Remove Photo"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Photo Metadata */}
+                <div className="space-y-0.5 text-[11px]">
+                  <p className="font-bold text-slate-800 truncate">{photo.name}</p>
+                  <div className="flex items-center justify-between text-slate-500 text-[10px]">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-red-500" /> 23.795°N, 86.430°E
+                    </span>
+                    <span>{photo.size}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Summary Notes & Submit */}
-        <div className="mg-card p-4 space-y-3">
+        <div className="mg-card p-5 space-y-4">
           <label className="block text-xs font-semibold text-enterprise-text">Inspector Overall Concluding Remarks</label>
           <textarea
             rows="2"
@@ -278,10 +446,17 @@ export default function InspectionRunner({ onComplete }) {
 
             <button
               type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-extrabold text-xs rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors"
+              disabled={isSubmitting}
+              className={`w-full sm:w-auto px-6 py-2.5 bg-mgBlue-600 hover:bg-mgBlue-500 active:bg-mgBlue-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-mgBlue-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer ${isSubmitting ? 'opacity-70 cursor-wait' : ''}`}
             >
-              <Send className="w-4 h-4" />
-              <span>Submit Field Inspection Report</span>
+              {isSubmitting ? (
+                <span>Recording Inspection...</span>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>{isOnline ? 'Submit Field Inspection Report' : 'Save Inspection to Device (Offline)'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -304,7 +479,7 @@ export default function InspectionRunner({ onComplete }) {
           description: candidateWorker 
             ? `${candidateWorker.role} ${candidateWorker.name} (${candidateWorker.workerId}) observed on duty in ${area} with expired safety competency certification.`
             : `Safety non-compliance detected in ${area} requiring immediate remediation.`,
-          inspectionId: submittedInspection?.inspectionId
+          inspectionId: submittedInspection?.inspectionId || submittedInspection?.localId
         }}
       />
     </div>

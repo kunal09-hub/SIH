@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useOffline } from '../../context/OfflineContext';
 import { evaluateRisk } from '../../utils/aiRiskEngine';
+import { calculateCertificateStatus } from '../../utils/dateHelpers';
 import { AlertTriangle, Sparkles, UploadCloud } from 'lucide-react';
 
 export default function ReportViolationModal({ isOpen, onClose, initialData = null }) {
   const { mines, workers, certificates, reportViolation } = useData();
   const { currentUser } = useAuth();
+  const { isOnline, queueOfflineItem } = useOffline();
   const fileInputRef = useRef(null);
   const prevIsOpenRef = useRef(false);
 
@@ -55,12 +58,15 @@ export default function ReportViolationModal({ isOpen, onClose, initialData = nu
     if (!newWorkerId) {
       setCertificateId('');
     } else {
-      // If current certificate doesn't belong to newly selected worker, reset it
-      if (certificateId) {
-        const certStillValid = certificates.some(c => c.certificateId === certificateId && c.workerId === newWorkerId);
-        if (!certStillValid) {
-          setCertificateId('');
-        }
+      const workerCerts = certificates.filter(c => c.workerId === newWorkerId);
+      // Auto-select expired certificate if present, or first certificate
+      const expiredCert = workerCerts.find(c => calculateCertificateStatus(c.expiryDate).status === 'EXPIRED');
+      if (expiredCert) {
+        setCertificateId(expiredCert.certificateId);
+      } else if (workerCerts.length > 0) {
+        setCertificateId(workerCerts[0].certificateId);
+      } else {
+        setCertificateId('');
       }
     }
   };
@@ -106,8 +112,7 @@ export default function ReportViolationModal({ isOpen, onClose, initialData = nu
 
     setIsSubmitting(true);
     const selectedMine = mines.find(m => m.mineId === mineId);
-
-    reportViolation({
+    const payload = {
       mineId,
       mineName: selectedMine?.mineName || mineId,
       area: area.trim(),
@@ -119,7 +124,16 @@ export default function ReportViolationModal({ isOpen, onClose, initialData = nu
       description: description.trim(),
       evidence: evidenceName,
       inspectionId: initialData?.inspectionId || null,
-    }, currentUser?.name);
+    };
+
+    if (!isOnline) {
+      queueOfflineItem('VIOLATION', payload, currentUser?.name);
+      setIsSubmitting(false);
+      onClose();
+      return;
+    }
+
+    reportViolation(payload, currentUser?.name);
 
     setIsSubmitting(false);
     onClose();
@@ -225,12 +239,15 @@ export default function ReportViolationModal({ isOpen, onClose, initialData = nu
               onChange={(e) => handleCertificateChange(e.target.value)}
               className="mg-select font-mono text-xs"
             >
-              <option value="">None</option>
-              {availableCertificates.map(c => (
-                <option key={c.certificateId} value={c.certificateId}>
-                  {c.certificateId} - {c.certificateType}
-                </option>
-              ))}
+              <option value="">None / No Linked Certificate</option>
+              {availableCertificates.map(c => {
+                const st = calculateCertificateStatus(c.expiryDate).status;
+                return (
+                  <option key={c.certificateId} value={c.certificateId}>
+                    {c.certificateId} — {c.certificateType} ({st})
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>

@@ -13,19 +13,19 @@ export default function ExecutiveReportView() {
         <div>
           <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-mgGreen-600" />
-            <span>Executive Mine Compliance Scorecard & Summary Report (Prototype)</span>
+            <span>Executive Mine Compliance Scorecard & Summary Report</span>
           </h2>
           <p className="text-xs text-enterprise-text-muted mt-1">
-            Generated executive summary report for compliance tracking and board review (SIH Prototype)
+            Generated executive summary report for compliance tracking and board review
           </p>
         </div>
 
         <button
           onClick={() => window.print()}
-          className="px-4 py-2 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-900 text-white text-xs font-bold rounded-lg shadow transition-colors"
         >
           <Printer className="w-4 h-4" />
-          <span>Print / Save as PDF</span>
+          <span>Export / Print PDF</span>
         </button>
       </div>
 
@@ -39,12 +39,12 @@ export default function ExecutiveReportView() {
             </div>
             <div>
               <h3 className="text-lg font-black text-enterprise-text">MINING COMPLIANCE & SAFETY AUDIT REPORT</h3>
-              <p className="text-xs text-enterprise-text-muted">MineGuard AI Governance System • SIH PS26024 Prototype</p>
+              <p className="text-xs text-enterprise-text-muted">MineGuard Governance System</p>
             </div>
           </div>
           <div className="text-right text-xs font-mono text-enterprise-text-muted">
             <p>Report Date: {new Date().toLocaleDateString('en-GB')}</p>
-            <p>Status: SYSTEM GENERATED (Prototype)</p>
+            <p>Status: SYSTEM GENERATED</p>
           </div>
         </div>
 

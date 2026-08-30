@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -13,12 +14,16 @@ import {
   Activity,
   History,
   Scale,
-  QrCode
+  QrCode,
+  Siren
 } from 'lucide-react';
 
 export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
   const { currentUser } = useAuth();
+  const { sosAlerts } = useData();
   const role = currentUser?.role || 'INSPECTOR';
+
+  const activeSOSCount = (sosAlerts || []).filter(a => a.status === 'ACTIVE').length;
 
   // Define original navigation tabs per role
   const getNavItems = () => {
@@ -34,6 +39,7 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
       case 'OFFICER':
         return [
           { id: 'dashboard', label: 'Mine Dashboard', icon: LayoutDashboard },
+          { id: 'sos-history', label: 'SOS Alert Log', icon: Siren, badge: activeSOSCount },
           { id: 'workers', label: 'Worker Registry', icon: Users },
           { id: 'certificates', label: 'Certificates', icon: FileCheck },
           { id: 'actions', label: 'Corrective Actions', icon: ShieldAlert },
@@ -43,6 +49,7 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
       case 'MANAGEMENT':
         return [
           { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard },
+          { id: 'sos-history', label: 'Emergency Log', icon: Siren, badge: activeSOSCount },
           { id: 'mines-compare', label: 'Mine Comparison', icon: Layers },
           { id: 'risk-analytics', label: 'Risk Analytics', icon: Activity },
           { id: 'compliance-reports', label: 'Reports & Compliance', icon: FileText },
@@ -51,6 +58,7 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
       case 'AUTHORITY':
         return [
           { id: 'dashboard', label: 'National Overview', icon: LayoutDashboard },
+          { id: 'sos-history', label: 'SOS Alerts Log', icon: Siren, badge: activeSOSCount },
           { id: 'high-risk', label: 'High-Risk Units', icon: AlertTriangle },
           { id: 'directives', label: 'Directives & Notices', icon: Scale },
           { id: 'audit-log', label: 'System Audit Trail', icon: History },
@@ -77,14 +85,21 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
                 onSelectTab(item.id);
                 if (onClose) onClose();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
                 isActive
                   ? 'bg-mgBlue-600 text-white shadow-sm'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-white/60'}`} />
-              <span>{item.label}</span>
+              <div className="flex items-center gap-3">
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : item.id === 'sos-history' && item.badge > 0 ? 'text-red-400 animate-pulse' : 'text-white/60'}`} />
+                <span>{item.label}</span>
+              </div>
+              {item.badge > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black font-mono animate-pulse shadow-sm shadow-red-600/50">
+                  {item.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -100,7 +115,7 @@ export default function Sidebar({ currentTab, onSelectTab, isOpen, onClose }) {
           </span>
         </div>
         <p className="text-center text-white/30 text-[10px]">
-          MineGuard AI • Made By Team PRAYOJANA
+          MineGuard • Made By Team PRAYOJANA
         </p>
       </div>
     </div>

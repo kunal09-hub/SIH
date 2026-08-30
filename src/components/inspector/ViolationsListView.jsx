@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useOffline } from '../../context/OfflineContext';
 import { formatDate } from '../../utils/dateHelpers';
 import Badge from '../common/Badge';
-import { AlertTriangle, Filter, Search, ShieldAlert, Sparkles, Plus } from 'lucide-react';
+import { AlertTriangle, Filter, Search, ShieldAlert, Sparkles, Plus, CloudUpload, WifiOff } from 'lucide-react';
 import ReportViolationModal from './ReportViolationModal';
 
 export default function ViolationsListView() {
   const { violations, mines } = useData();
   const { currentUser } = useAuth();
+  const { offlineQueue } = useOffline();
   const [filterSeverity, setFilterSeverity] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterMine, setFilterMine] = useState(currentUser?.role === 'OFFICER' ? (currentUser.mineId || 'MINE-01') : 'ALL');
@@ -116,6 +118,32 @@ export default function ViolationsListView() {
 
       {/* Violations List Cards */}
       <div className="space-y-3">
+        {/* Pending Offline Items Banner/Cards */}
+        {offlineQueue.filter(item => item.type === 'VIOLATION').map((item) => (
+          <div key={item.tempId} className="mg-card border-l-4 border-l-mgAmber-500 bg-amber-50/40 p-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-amber-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-mgAmber-800">{item.tempId}</span>
+                <span className="text-xs text-enterprise-text-muted font-semibold">{item.payload.mineName || item.payload.mineId} — {item.payload.area}</span>
+                <Badge size="sm">{item.payload.severity}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-mono">
+                  <CloudUpload className="w-3 h-3" /> PENDING SYNC (OFFLINE)
+                </span>
+                <span className="text-[11px] text-enterprise-text-muted font-mono">{item.timestamp}</span>
+              </div>
+            </div>
+
+            <div className="mt-2 text-xs">
+              <p className="font-bold text-mgAmber-700">{item.payload.category}</p>
+              <p className="text-enterprise-text mt-0.5">{item.payload.description}</p>
+              <p className="text-[10px] text-enterprise-text-muted mt-1 font-mono">
+                Saved locally on device • Will synchronize when connection is online
+              </p>
+            </div>
+          </div>
+        ))}
         {filteredViolations.length === 0 ? (
           <p className="p-8 text-center text-enterprise-text-muted mg-card text-xs">
             No violations match the selected filters.

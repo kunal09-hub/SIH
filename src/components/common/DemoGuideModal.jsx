@@ -35,10 +35,10 @@ export default function DemoGuideModal({ isOpen, onClose }) {
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="🏆 SIH Presentation Walkthrough & Demonstration Flow" subtitle="Recommended step-by-step presentation script to demonstrate the complete compliance lifecycle" maxWidth="max-w-3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="🏆 System Walkthrough & Demonstration Flow" subtitle="Recommended step-by-step presentation script to demonstrate the complete compliance lifecycle" maxWidth="max-w-3xl">
       <div className="space-y-4">
         <div className="bg-mgAmber-50 border border-amber-200 p-3 rounded-lg text-xs text-mgAmber-600">
-          <strong>Core Presentation Message:</strong> "MineGuard AI demonstrates an explainable, closed-loop compliance and safety governance system for coal mines. When a hazard or expired credential is detected, the AI evaluates its risk, alerts mine management, tracks corrective remediation, and requires dual-party verification before updating executive compliance scores."
+          <strong>Core Presentation Message:</strong> "MineGuard demonstrates an explainable, closed-loop compliance and safety governance system for coal mines. When a hazard or expired credential is detected, the AI evaluates its risk, alerts mine management, tracks corrective remediation, and requires dual-party verification before updating executive compliance scores."
         </div>
 
         <div className="space-y-3 mt-4">

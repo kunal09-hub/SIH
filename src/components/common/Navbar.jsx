@@ -29,13 +29,13 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
         )}
 
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('dashboard')}>
-          {/* MineGuard AI Shield Logo */}
+          {/* MineGuard Shield Logo */}
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white flex items-center justify-center shadow shrink-0">
             <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-navy-800" />
           </div>
           <div>
             <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-1">
-              MineGuard <span className="text-mgBlue-400">AI</span>
+              MineGuard
             </h1>
             <p className="text-[10px] sm:text-[11px] text-white/50 tracking-wide hidden md:block">
               AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
