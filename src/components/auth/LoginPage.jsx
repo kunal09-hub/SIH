@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +68,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Feature Highlights */}
+          {/* Feature Highlights — 2×2 grid with equal sizing */}
           <div className="grid grid-cols-2 gap-3 max-w-sm pt-4">
             {[
               { label: 'Digital Inspections', desc: 'SOP-based field audits' },
@@ -75,9 +76,9 @@ export default function LoginPage() {
               { label: 'Certificate Registry', desc: 'Compliance tracking' },
               { label: 'Emergency SOS', desc: 'Real-time alert dispatch' },
             ].map((f) => (
-              <div key={f.label} className="p-3 bg-white/70 backdrop-blur-sm rounded-xl border border-[#E2E8F0] space-y-0.5">
+              <div key={f.label} className="p-3 bg-white/70 backdrop-blur-sm rounded-xl border border-[#E2E8F0] flex flex-col justify-center min-h-[62px]">
                 <p className="text-xs font-bold text-[#172033]">{f.label}</p>
-                <p className="text-[11px] text-[#64748B]">{f.desc}</p>
+                <p className="text-[11px] text-[#64748B] mt-0.5">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -148,13 +149,13 @@ export default function LoginPage() {
                   User / Employee ID
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     id="login-userId"
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-[#CBD5E1] rounded-xl text-sm text-[#172033] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
+                    className="w-full h-[46px] pl-10 pr-4 bg-white border border-[#CBD5E1] rounded-xl text-sm text-[#172033] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
                     placeholder="e.g. INS-001, MO-001"
                     required
                     autoFocus
@@ -168,17 +169,30 @@ export default function LoginPage() {
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+                  <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     id="login-password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-[#CBD5E1] rounded-xl text-sm text-[#172033] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
+                    className="w-full h-[46px] pl-10 pr-11 bg-white border border-[#CBD5E1] rounded-xl text-sm text-[#172033] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
                     placeholder="Enter password"
                     required
                     autoComplete="current-password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#94A3B8] hover:text-[#64748B] focus:outline-none focus:text-[#2563EB] transition-colors cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={0}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-[18px] h-[18px]" />
+                    ) : (
+                      <Eye className="w-[18px] h-[18px]" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -206,7 +220,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-[#93B4F6] text-white font-bold text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:ring-offset-2"
+                className="w-full h-[46px] px-4 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-[#93B4F6] text-white font-bold text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:ring-offset-2"
               >
                 {isLoading ? (
                   <span>Authenticating...</span>
@@ -231,3 +245,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
