@@ -26,10 +26,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex font-sans select-none">
+    <div className="min-h-screen bg-[#F7F9FC] flex flex-col lg:flex-row font-sans select-none overflow-x-hidden">
 
-      {/* ── LEFT PANEL: Brand & Illustration ── */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] flex-col justify-between p-10 xl:p-14 relative overflow-hidden">
+      {/* ── LEFT PANEL: Brand & Product Information ── */}
+      <div className="w-full lg:w-[48%] xl:w-[44%] flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 relative overflow-hidden bg-[#F7F9FC]">
 
         {/* Subtle background grid pattern */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.035]">
@@ -43,11 +43,16 @@ export default function LoginPage() {
           </svg>
         </div>
 
-        {/* Top Brand */}
-        <div className="relative z-10 space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-600/20 border border-blue-500/20">
-              <Shield className="w-7 h-7 text-white" />
+        {/* Top Content Stack (Logo -> Heading -> Description -> 2x2 Cards) */}
+        <div className="relative z-10 space-y-6">
+          {/* MineGuard Logo & Platform Badge */}
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md shadow-slate-900/5 border border-[#E2E8F0] shrink-0 p-1 overflow-hidden">
+              <img
+                src="/mineguard-logo.png"
+                alt="MineGuard Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-2xl font-black text-[#172033] tracking-tight leading-none">
@@ -57,35 +62,48 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="max-w-sm space-y-3 pt-4">
-            <h2 className="text-3xl xl:text-4xl font-extrabold text-[#172033] leading-tight tracking-tight">
+          {/* Main Heading */}
+          <div className="max-w-md space-y-3 text-wrap-safe">
+            <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-[#172033] leading-tight tracking-tight text-wrap-safe">
               Smart Mine<br />
               Governance &<br />
               <span className="text-[#2563EB]">Safety Management</span>
             </h2>
-            <p className="text-sm text-[#64748B] leading-relaxed max-w-xs">
+            <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed max-w-sm text-wrap-safe">
               Unified inspection, compliance, risk assessment, and emergency response platform for coal mine operations.
             </p>
           </div>
 
-          {/* Feature Highlights — 2×2 grid with equal sizing */}
-          <div className="grid grid-cols-2 gap-3 max-w-sm pt-4">
+          {/* Feature Highlights — Clean 2×2 Grid with Equal Sizing */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 max-w-md">
             {[
               { label: 'Digital Inspections', desc: 'SOP-based field audits' },
               { label: 'AI Risk Scoring', desc: 'Automated prioritization' },
               { label: 'Certificate Registry', desc: 'Compliance tracking' },
               { label: 'Emergency SOS', desc: 'Real-time alert dispatch' },
             ].map((f) => (
-              <div key={f.label} className="p-3 bg-white/70 backdrop-blur-sm rounded-xl border border-[#E2E8F0] flex flex-col justify-center min-h-[62px]">
-                <p className="text-xs font-bold text-[#172033]">{f.label}</p>
-                <p className="text-[11px] text-[#64748B] mt-0.5">{f.desc}</p>
+              <div
+                key={f.label}
+                className="p-3 sm:p-3.5 bg-white/80 backdrop-blur-sm rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col justify-center min-h-[64px] text-wrap-safe min-w-0"
+              >
+                <p className="text-xs font-bold text-[#172033] leading-snug text-wrap-safe">{f.label}</p>
+                <p className="text-[11px] text-[#64748B] mt-0.5 leading-tight text-wrap-safe">{f.desc}</p>
               </div>
             ))}
           </div>
+
+          {/* Attribution (Shows here in flow on mobile/tablet) */}
+          <div className="pt-2 lg:hidden space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200">
+              <span className="text-[11px] font-semibold text-blue-700 tracking-wide">
+                Made By Team PRAYOJANA
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Bottom Attribution */}
-        <div className="relative z-10 space-y-2 pt-8">
+        {/* Bottom Attribution (Desktop) */}
+        <div className="relative z-10 space-y-2 pt-8 hidden lg:block">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-[11px] font-semibold text-blue-700 tracking-wide">
               Made By Team PRAYOJANA
@@ -97,7 +115,7 @@ export default function LoginPage() {
         </div>
 
         {/* Decorative abstract mining landscape */}
-        <div className="absolute bottom-0 right-0 w-72 h-72 opacity-[0.04] pointer-events-none">
+        <div className="absolute bottom-0 right-0 w-72 h-72 opacity-[0.04] pointer-events-none hidden lg:block">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             <polygon points="0,200 40,120 80,160 120,90 160,130 200,70 200,200" fill="#2563EB" />
             <polygon points="0,200 60,140 100,170 140,110 180,150 200,120 200,200" fill="#1D4ED8" />
@@ -105,28 +123,17 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL: Login Form ── */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-        <div className="w-full max-w-[420px] space-y-6">
-
-          {/* Mobile-only brand header (hidden on desktop where left panel shows) */}
-          <div className="text-center lg:hidden space-y-3 pb-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-600/20 border border-blue-500/20">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-[#172033] tracking-tight">MineGuard</h1>
-              <p className="text-xs text-[#64748B] mt-0.5">Smart Mine Governance & Safety Management</p>
-            </div>
-          </div>
+      {/* ── RIGHT PANEL: Centered Login Card ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10 xl:p-14">
+        <div className="w-[calc(100%-16px)] sm:w-full max-w-[420px] mx-auto space-y-4">
 
           {/* Login Card */}
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.06)] p-7 sm:p-8 space-y-5">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.06)] p-6 sm:p-8 space-y-5">
 
             {/* Card Header */}
             <div className="space-y-1">
               <h2 className="text-lg font-extrabold text-[#172033] tracking-tight flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#2563EB]" />
+                <Lock className="w-4 h-4 text-[#2563EB] shrink-0" />
                 Secure Login
               </h2>
               <p className="text-xs text-[#64748B]">
@@ -136,20 +143,21 @@ export default function LoginPage() {
 
             {/* Error Alert */}
             {error && (
-              <div className="p-3 bg-[#FEF2F2] border border-red-200 rounded-xl text-xs text-[#DC2626] flex items-start gap-2">
+              <div className="p-3 bg-[#FEF2F2] border border-red-200 rounded-xl text-xs text-[#DC2626] flex items-start gap-2 text-wrap-safe min-w-0">
                 <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-                <span className="font-medium">{error}</span>
+                <span className="font-medium text-wrap-safe min-w-0">{error}</span>
               </div>
             )}
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="login-userId" className="block text-sm font-semibold text-[#334155] mb-1.5">
+            <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
+              {/* User / Employee ID */}
+              <div className="min-w-0">
+                <label htmlFor="login-userId" className="block text-sm font-semibold text-[#334155] mb-1.5 text-wrap-safe">
                   User / Employee ID
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     id="login-userId"
                     type="text"
@@ -164,12 +172,13 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* Password with Visibility Toggle */}
               <div>
                 <label htmlFor="login-password" className="block text-sm font-semibold text-[#334155] mb-1.5">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
@@ -183,7 +192,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#94A3B8] hover:text-[#64748B] focus:outline-none focus:text-[#2563EB] transition-colors cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#94A3B8] hover:text-[#475569] focus:outline-none focus:text-[#2563EB] transition-colors cursor-pointer rounded-lg"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     tabIndex={0}
                   >
@@ -196,8 +205,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot */}
-              <div className="flex items-center justify-between text-sm pt-0.5">
+              {/* Remember Me & Forgot Password Row */}
+              <div className="flex items-center justify-between text-sm pt-0.5 gap-2">
                 <label className="flex items-center gap-2 text-[#475569] cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -210,7 +219,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setError('Contact your System Administrator for credential reset.')}
-                  className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors"
+                  className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -234,10 +243,9 @@ export default function LoginPage() {
             </form>
           </div>
 
-          {/* Mobile Footer */}
-          <div className="text-center space-y-1 lg:hidden">
-            <p className="text-[11px] text-[#94A3B8]">Made By Team PRAYOJANA</p>
-            <p className="text-[10px] text-[#CBD5E1]">© 2026 MineGuard · Authorized Access Only</p>
+          {/* Mobile Footer Note */}
+          <div className="text-center space-y-1 lg:hidden pt-2 pb-4">
+            <p className="text-[10px] text-[#94A3B8]">© 2026 MineGuard · Authorized Access Only</p>
           </div>
 
         </div>
@@ -245,4 +253,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
 

@@ -69,3 +69,10 @@
   outline-offset: 2px;
   border-radius: 8px;
 }
+
+/* ─── Safe Text Wrap & Overflow Prevention ─── */
+.text-wrap-safe {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
