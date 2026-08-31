@@ -4,7 +4,6 @@ import { calculateCertificateStatus, formatDate } from '../../utils/dateHelpers'
 import Badge from '../common/Badge';
 import { Users, Search, Filter, Plus, FileCheck, AlertTriangle } from 'lucide-react';
 import AddCertificateModal from './AddCertificateModal';
-
 import { useAuth } from '../../context/AuthContext';
 
 export default function WorkerRegistry() {
@@ -37,20 +36,22 @@ export default function WorkerRegistry() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <Users className="w-5 h-5 text-mgBlue-600" />
-            <span>Worker Compliance & Certification Registry</span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-600" />
+              <span>Worker Registry & Certification</span>
+            </h2>
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
             Personnel records, technical designations, safety certification status, and renewal actions
           </p>
         </div>
 
         <button
           onClick={() => handleOpenAddCert(workers[0])}
-          className="px-4 py-2 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
+          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Register New Certificate</span>
@@ -58,9 +59,9 @@ export default function WorkerRegistry() {
       </div>
 
       {/* Filter / Search bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mg-card p-3.5 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white border border-[#E2E8F0] p-4 rounded-2xl text-xs shadow-sm">
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter by Mine</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter by Mine</label>
           <select
             value={selectedMine}
             disabled={currentUser?.role === 'OFFICER'}
@@ -68,10 +69,10 @@ export default function WorkerRegistry() {
               setSelectedMine(e.target.value);
               setSelectedZone('ALL');
             }}
-            className={`w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed border-amber-500/40 text-mgAmber-600 font-semibold' : ''}`}
+            className={`w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed bg-slate-100 font-semibold' : ''}`}
           >
             {currentUser?.role === 'OFFICER' ? (
-              <option value={currentUser.mineId || 'MINE-01'}>Demo Mine Alpha (Assigned Unit)</option>
+              <option value={currentUser.mineId || 'MINE-01'}>Mine Alpha (Assigned Unit)</option>
             ) : (
               <>
                 <option value="ALL">All Mines ({workers.length} Personnel)</option>
@@ -82,11 +83,11 @@ export default function WorkerRegistry() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter by Zone</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter by Zone</label>
           <select
             value={selectedZone}
             onChange={(e) => setSelectedZone(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All Zones</option>
             <option value="North Shaft">North Shaft</option>
@@ -98,15 +99,15 @@ export default function WorkerRegistry() {
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Search Personnel</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Search Personnel</label>
           <div className="relative">
-            <Search className="w-4 h-4 text-enterprise-text-muted absolute left-3 top-2" />
+            <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by worker name, ID, or technical role..."
-              className="w-full pl-9 pr-3 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none font-mono"
+              className="w-full pl-9 pr-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 font-mono"
             />
           </div>
         </div>
@@ -126,35 +127,35 @@ export default function WorkerRegistry() {
           const linkedMine = mines.find(m => m.mineId === worker.mineId);
 
           return (
-            <div key={worker.workerId} className="mg-card hover:shadow-card-hover p-4.5 shadow-card flex flex-col justify-between space-y-4 transition-all">
+            <div key={worker.workerId} className="bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4 transition-all">
               <div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="text-sm font-bold text-enterprise-text flex items-center gap-1.5">
+                    <h4 className="text-sm font-bold text-[#172033] flex items-center gap-1.5">
                       {worker.name}
-                      <span className="text-[10px] font-mono text-enterprise-text-muted">({worker.workerId})</span>
+                      <span className="text-[10px] font-mono text-[#64748B]">({worker.workerId})</span>
                     </h4>
-                    <p className="text-xs font-semibold text-mgAmber-600 mt-0.5">{worker.role}</p>
-                    <p className="text-[11px] text-enterprise-text-muted mt-0.5">{linkedMine?.mineName} • {worker.area}</p>
+                    <p className="text-xs font-semibold text-blue-600 mt-0.5">{worker.role}</p>
+                    <p className="text-[11px] text-[#64748B] mt-0.5">{linkedMine?.mineName} • {worker.area}</p>
                   </div>
                   <Badge size="sm">{overallStatus}</Badge>
                 </div>
 
                 {/* Certificates List */}
-                <div className="mt-3 pt-3 border-t border-enterprise-border space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted">
+                <div className="mt-3 pt-3 border-t border-[#E2E8F0] space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
                     Compliance Certificates ({workerCerts.length})
                   </p>
                   {workerCerts.length === 0 ? (
-                    <p className="text-[11px] text-enterprise-text-muted italic">No certificates recorded.</p>
+                    <p className="text-[11px] text-[#94A3B8] italic">No certificates recorded.</p>
                   ) : (
                     workerCerts.map((cert) => {
                       const st = calculateCertificateStatus(cert.expiryDate);
                       return (
-                        <div key={cert.certificateId} className="p-2 rounded-lg bg-gray-50 border border-enterprise-border text-[11px] flex items-center justify-between">
+                        <div key={cert.certificateId} className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[11px] flex items-center justify-between">
                           <div className="truncate pr-2">
-                            <p className="font-semibold text-enterprise-text truncate">{cert.certificateType}</p>
-                            <p className="text-[10px] text-enterprise-text-muted font-mono">Exp: {formatDate(cert.expiryDate)}</p>
+                            <p className="font-semibold text-[#172033] truncate">{cert.certificateType}</p>
+                            <p className="text-[10px] text-[#64748B] font-mono">Exp: {formatDate(cert.expiryDate)}</p>
                           </div>
                           <Badge size="sm">{st.status}</Badge>
                         </div>
@@ -167,9 +168,9 @@ export default function WorkerRegistry() {
               {/* Bottom Action */}
               <button
                 onClick={() => handleOpenAddCert(worker)}
-                className="w-full py-2 bg-white hover:bg-mgBlue-600 text-enterprise-text hover:text-white font-bold text-xs rounded-lg transition-colors border border-enterprise-border shadow-sm flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-[#F8FAFC] hover:bg-blue-50 text-[#172033] hover:text-blue-600 font-bold text-xs rounded-xl transition-colors border border-[#CBD5E1] flex items-center justify-center gap-1.5"
               >
-                <FileCheck className="w-3.5 h-3.5" />
+                <FileCheck className="w-3.5 h-3.5 text-blue-600" />
                 <span>+ Add / Renew Certificate</span>
               </button>
             </div>

@@ -1,4 +1,4 @@
-// AI-Assisted Risk Prioritization & Explainability Engine (SIH PS26024)
+// AI-Assisted Risk Prioritization & Explainability Engine — MineGuard Enterprise
 
 export function evaluateRisk({
   category,

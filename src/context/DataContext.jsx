@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabaseClient';
 import {
   DEMO_MINES,
   DEMO_WORKERS,
@@ -12,15 +13,678 @@ import {
 } from '../utils/seedData';
 import { calculateCertificateStatus, getTodayDateString } from '../utils/dateHelpers';
 import { evaluateRisk } from '../utils/aiRiskEngine';
-import { sosRealtimeService } from '../services/sosService';
 
 const DataContext = createContext();
 
 const STORAGE_KEY_PREFIX = 'mineguard_state_v1_';
 
-const sosBroadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window
-  ? new BroadcastChannel('mineguard_sos_realtime_v1')
-  : null;
+function mapSupabaseToMine(row) {
+  if (!row) return null;
+  return {
+    mineId: row.mine_id || row.mineId || row.id,
+    code: row.code || '',
+    mineName: row.mine_name || row.mineName || '',
+    location: row.location || '',
+    type: row.type || '',
+    status: row.status || 'ACTIVE',
+    complianceScore: row.compliance_score ?? row.complianceScore ?? 80,
+    riskLevel: row.risk_level || row.riskLevel || 'LOW',
+    officer: row.officer || '',
+    officerId: row.officer_id || row.officerId || '',
+    workersCount: row.workers_count ?? row.workersCount ?? 0,
+    activeViolations: row.active_violations ?? row.activeViolations ?? 0,
+    pendingActions: row.pending_actions ?? row.pendingActions ?? 0,
+  };
+}
+
+function mapMineToSupabaseRow(m) {
+  if (!m || !m.mineId) return null;
+  return {
+    mine_id: m.mineId,
+    code: m.code || null,
+    mine_name: m.mineName || null,
+    location: m.location || null,
+    type: m.type || null,
+    status: m.status || 'ACTIVE',
+    compliance_score: m.complianceScore ?? 80,
+    risk_level: m.riskLevel || 'LOW',
+    officer: m.officer || null,
+    officer_id: m.officerId || null,
+    workers_count: m.workersCount ?? 0,
+    active_violations: m.activeViolations ?? 0,
+    pending_actions: m.pendingActions ?? 0,
+  };
+}
+
+async function saveMinesToSupabase(minesArr) {
+  if (!minesArr || minesArr.length === 0) return;
+  try {
+    const rows = minesArr.map(mapMineToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('mines')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase mines insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save mines exception:', err);
+  }
+}
+
+function mapSupabaseToWorker(row) {
+  if (!row) return null;
+  return {
+    workerId: row.worker_id || row.workerId || row.id,
+    name: row.name || '',
+    mineId: row.mine_id || row.mineId || '',
+    mineName: row.mine_name || row.mineName || '',
+    zoneId: row.zone_id || row.zoneId || '',
+    zoneName: row.zone_name || row.zoneName || '',
+    area: row.area || '',
+    role: row.role || '',
+    status: row.status || 'ACTIVE',
+    joiningDate: row.joining_date || row.joiningDate || '',
+    bloodGroup: row.blood_group || row.bloodGroup || '',
+    contact: row.contact || '',
+  };
+}
+
+function mapWorkerToSupabaseRow(w) {
+  if (!w || !w.workerId) return null;
+  return {
+    worker_id: w.workerId,
+    name: w.name || null,
+    mine_id: w.mineId || null,
+    mine_name: w.mineName || null,
+    zone_id: w.zoneId || null,
+    zone_name: w.zoneName || null,
+    area: w.area || null,
+    role: w.role || null,
+    status: w.status || 'ACTIVE',
+    joining_date: w.joiningDate || null,
+    blood_group: w.bloodGroup || null,
+    contact: w.contact || null,
+  };
+}
+
+async function saveWorkersToSupabase(workersArr) {
+  if (!workersArr || workersArr.length === 0) return;
+  try {
+    const rows = workersArr.map(mapWorkerToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('workers')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase workers insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save workers exception:', err);
+  }
+}
+
+function mapSupabaseToCertificate(row) {
+  if (!row) return null;
+  return {
+    certificateId: row.certificate_id || row.certificateId || row.id,
+    workerId: row.worker_id || row.workerId || '',
+    workerName: row.worker_name || row.workerName || '',
+    certificateType: row.certificate_type || row.certificateType || '',
+    issueDate: row.issue_date || row.issueDate || '',
+    expiryDate: row.expiry_date || row.expiryDate || '',
+    issuingAuthority: row.issuing_authority || row.issuingAuthority || '',
+    documentUrl: row.document_url || row.documentUrl || '',
+    verificationStatus: row.verification_status || row.verificationStatus || 'VALID',
+    mineId: row.mine_id || row.mineId || '',
+    zoneId: row.zone_id || row.zoneId || '',
+    area: row.area || '',
+  };
+}
+
+function mapCertificateToSupabaseRow(c) {
+  if (!c || !c.certificateId) return null;
+  return {
+    certificate_id: c.certificateId,
+    worker_id: c.workerId || null,
+    worker_name: c.workerName || null,
+    certificate_type: c.certificateType || null,
+    issue_date: c.issueDate || null,
+    expiry_date: c.expiryDate || null,
+    issuing_authority: c.issuingAuthority || null,
+    document_url: c.documentUrl || null,
+    verification_status: c.verificationStatus || 'VALID',
+    mine_id: c.mineId || null,
+    zone_id: c.zoneId || null,
+    area: c.area || null,
+  };
+}
+
+async function saveCertificatesToSupabase(certsArr) {
+  if (!certsArr || certsArr.length === 0) return;
+  try {
+    const rows = certsArr.map(mapCertificateToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('certificates')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase certificates insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save certificates exception:', err);
+  }
+}
+
+async function saveCertificateToSupabase(c) {
+  if (!c || !c.certificateId) return;
+  try {
+    const row = mapCertificateToSupabaseRow(c);
+    const { data, error } = await supabase
+      .from('certificates')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('Supabase single certificate insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save certificate exception:', err);
+  }
+}
+
+function mapSupabaseToInspection(row) {
+  if (!row) return null;
+  return {
+    inspectionId: row.inspection_id || row.inspectionId || row.id,
+    mineId: row.mine_id || row.mineId || '',
+    mineName: row.mine_name || row.mineName || '',
+    area: row.area || '',
+    zoneId: row.zone_id || row.zoneId || '',
+    date: row.date || '',
+    inspectionType: row.inspection_type || row.inspectionType || '',
+    overallResult: row.overall_result || row.overallResult || 'COMPLETED',
+    inspectorId: row.inspector_id || row.inspectorId || '',
+    inspectorName: row.inspector_name || row.inspectorName || '',
+    checklistResults: row.checklist_results || row.checklistResults || [],
+    notes: row.notes || '',
+  };
+}
+
+function mapInspectionToSupabaseRow(i) {
+  if (!i || !i.inspectionId) return null;
+  return {
+    inspection_id: i.inspectionId,
+    mine_id: i.mineId || null,
+    mine_name: i.mineName || null,
+    area: i.area || null,
+    zone_id: i.zoneId || null,
+    date: i.date || null,
+    inspection_type: i.inspectionType || null,
+    overall_result: i.overallResult || 'COMPLETED',
+    inspector_id: i.inspectorId || null,
+    inspector_name: i.inspectorName || null,
+    checklist_results: i.checklistResults || [],
+  };
+}
+
+async function saveInspectionsToSupabase(inspsArr) {
+  if (!inspsArr || inspsArr.length === 0) return;
+  try {
+    const rows = inspsArr.map(mapInspectionToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('inspections')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase inspections insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save inspections exception:', err);
+  }
+}
+
+async function saveInspectionToSupabase(i) {
+  if (!i || !i.inspectionId) return;
+  try {
+    const row = mapInspectionToSupabaseRow(i);
+    const { data, error } = await supabase
+      .from('inspections')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('Supabase single inspection insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save inspection exception:', err);
+  }
+}
+
+function mapSupabaseToViolation(row) {
+  if (!row) return null;
+  return {
+    violationId: row.violation_id || row.violationId || row.id,
+    mineId: row.mine_id || row.mineId,
+    mineName: row.mine_name || row.mineName,
+    area: row.area,
+    zoneId: row.zone_id || row.zoneId || null,
+    category: row.category,
+    severity: row.severity,
+    workerId: row.worker_id || row.workerId || null,
+    workerName: row.worker_name || row.workerName || null,
+    certificateId: row.certificate_id || row.certificateId || null,
+    description: row.description || '',
+    reportedBy: row.reported_by || row.reportedBy || '',
+    date: row.reported_date || row.date || '',
+    reportedDate: row.reported_date || row.date || '',
+    status: row.status,
+    evidence: row.evidence || '',
+    riskScore: row.risk_score ?? row.riskScore ?? 0,
+    riskLevel: row.risk_level || row.riskLevel || 'LOW',
+    aiExplanation: row.ai_explanation || row.aiExplanation || '',
+    inspectionId: row.inspection_id || row.inspectionId || null,
+    resolvedDate: row.resolved_date || row.resolvedDate || null,
+    verificationNotes: row.verification_notes || row.verificationNotes || null,
+  };
+}
+
+async function saveViolationToSupabase(v) {
+  if (!v || !v.violationId) return;
+  console.log('SUPABASE SAVE VIOLATION START:', v);
+  try {
+    const dbRow = {
+      violation_id: v.violationId,
+      mine_id: v.mineId || null,
+      mine_name: v.mineName || null,
+      area: v.area || null,
+      zone_id: v.zoneId || v.zone_id || null,
+      category: v.category || null,
+      severity: v.severity || null,
+      worker_id: v.workerId || null,
+      worker_name: v.workerName || null,
+      certificate_id: v.certificateId || null,
+      description: v.description || '',
+      reported_by: v.reportedBy || null,
+      reported_date: v.reportedDate || v.date || null,
+      status: v.status || 'OPEN',
+      evidence: v.evidence || null,
+      risk_score: v.riskScore ?? null,
+      risk_level: v.riskLevel || null,
+      ai_explanation: v.aiExplanation || null,
+      inspection_id: v.inspectionId || null,
+      resolved_date: v.resolvedDate || null,
+      verification_notes: v.verificationNotes || null,
+    };
+
+    console.log('SUPABASE INSERT VIOLATION PAYLOAD:', dbRow);
+
+    const { data, error } = await supabase
+      .from('violations')
+      .insert(dbRow)
+      .select();
+
+    console.log('SUPABASE INSERT VIOLATION RESULT:', { data, error });
+
+    if (error) {
+      console.error('SUPABASE VIOLATION ERROR FULL:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+    }
+  } catch (err) {
+    console.error('Supabase save violation exception:', err);
+  }
+}
+
+function mapViolationToSupabaseRow(v) {
+  if (!v || !v.violationId) return null;
+  return {
+    violation_id: v.violationId,
+    mine_id: v.mineId || null,
+    mine_name: v.mineName || null,
+    area: v.area || null,
+    zone_id: v.zoneId || v.zone_id || null,
+    category: v.category || null,
+    severity: v.severity || null,
+    worker_id: v.workerId || null,
+    worker_name: v.workerName || null,
+    certificate_id: v.certificateId || null,
+    description: v.description || '',
+    reported_by: v.reportedBy || null,
+    reported_date: v.reportedDate || v.date || null,
+    status: v.status || 'OPEN',
+    evidence: v.evidence || null,
+    risk_score: v.riskScore ?? null,
+    risk_level: v.riskLevel || null,
+    ai_explanation: v.aiExplanation || null,
+    inspection_id: v.inspectionId || null,
+    resolved_date: v.resolvedDate || null,
+    verification_notes: v.verificationNotes || null,
+  };
+}
+
+async function saveViolationsToSupabase(vArr) {
+  if (!vArr || vArr.length === 0) return;
+  try {
+    const rows = vArr.map(mapViolationToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('violations')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase batch violations insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase saveViolationsToSupabase exception:', err);
+  }
+}
+
+function mapSupabaseToCorrectiveAction(row) {
+  if (!row) return null;
+  return {
+    actionId: row.action_id || row.actionId || row.id,
+    violationId: row.violation_id || row.violationId || '',
+    mineId: row.mine_id || row.mineId || '',
+    title: row.title || '',
+    description: row.description || '',
+    assignedTo: row.assigned_to || row.assignedTo || '',
+    dueDate: row.due_date || row.dueDate || '',
+    priority: row.priority || 'MEDIUM',
+    status: row.status || 'IN PROGRESS',
+    createdDate: row.created_date || row.createdDate || '',
+    completionNotes: row.completion_notes || row.completionNotes || '',
+    evidence: row.evidence || '',
+    resolvedDate: row.resolved_date || row.resolvedDate || null,
+  };
+}
+
+function mapCorrectiveActionToSupabaseRow(ca) {
+  if (!ca || !ca.actionId) return null;
+  return {
+    action_id: ca.actionId,
+    violation_id: ca.violationId || null,
+    mine_id: ca.mineId || null,
+    title: ca.title || null,
+    description: ca.description || null,
+    assigned_to: ca.assignedTo || null,
+    due_date: ca.dueDate || null,
+    priority: ca.priority || 'MEDIUM',
+    status: ca.status || 'IN PROGRESS',
+    created_date: ca.createdDate || null,
+    completion_notes: ca.completionNotes || null,
+    evidence: ca.evidence || null,
+    resolved_date: ca.resolvedDate || null,
+  };
+}
+
+async function saveCorrectiveActionsToSupabase(actionsArr) {
+  if (!actionsArr || actionsArr.length === 0) return;
+  try {
+    const rows = actionsArr.map(mapCorrectiveActionToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('corrective_actions')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase corrective_actions insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save corrective_actions exception:', err);
+  }
+}
+
+async function saveCorrectiveActionToSupabase(ca) {
+  if (!ca || !ca.actionId) return;
+  try {
+    const row = mapCorrectiveActionToSupabaseRow(ca);
+    const { data, error } = await supabase
+      .from('corrective_actions')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('Supabase single corrective_action insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save corrective_action exception:', err);
+  }
+}
+
+function mapSupabaseToAlert(row) {
+  if (!row) return null;
+  const isRead = row.is_read ?? (row.status === 'READ');
+  return {
+    alertId: row.alert_id || row.alertId || row.id,
+    mineId: row.mine_id || row.mineId || '',
+    violationId: row.violation_id || row.violationId || row.related_entity || row.relatedEntity || '',
+    relatedEntity: row.related_entity || row.relatedEntity || row.violation_id || '',
+    title: row.title || '',
+    message: row.message || row.description || '',
+    description: row.description || row.message || '',
+    type: row.type || 'VIOLATION_REPORTED',
+    severity: row.severity || 'MEDIUM',
+    timestamp: row.timestamp || row.created_date || row.createdDate || '',
+    createdDate: row.created_date || row.timestamp || row.createdDate || '',
+    isRead: isRead,
+    status: row.status || (isRead ? 'READ' : 'UNREAD'),
+    targetRoles: Array.isArray(row.target_roles) ? row.target_roles : (row.targetRoles || ['officer', 'management', 'authority', 'inspector']),
+  };
+}
+
+function mapAlertToSupabaseRow(a) {
+  if (!a || !a.alertId) return null;
+  const isRead = a.isRead ?? (a.status === 'READ');
+  return {
+    alert_id: a.alertId,
+    mine_id: a.mineId || null,
+    violation_id: a.violationId || a.relatedEntity || null,
+    related_entity: a.relatedEntity || a.violationId || null,
+    title: a.title || null,
+    message: a.message || a.description || null,
+    description: a.description || a.message || null,
+    type: a.type || 'VIOLATION_REPORTED',
+    severity: a.severity || 'MEDIUM',
+    timestamp: a.timestamp || a.createdDate || null,
+    created_date: a.createdDate || a.timestamp || null,
+    is_read: isRead,
+    status: a.status || (isRead ? 'READ' : 'UNREAD'),
+    target_roles: a.targetRoles || ['officer', 'management', 'authority', 'inspector'],
+  };
+}
+
+async function saveAlertsToSupabase(alertsArr) {
+  if (!alertsArr || alertsArr.length === 0) return;
+  try {
+    const rows = alertsArr.map(mapAlertToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('alerts')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase alerts insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save alerts exception:', err);
+  }
+}
+
+async function saveAlertToSupabase(a) {
+  if (!a || !a.alertId) return;
+  try {
+    const row = mapAlertToSupabaseRow(a);
+    const { data, error } = await supabase
+      .from('alerts')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('Supabase single alert insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save alert exception:', err);
+  }
+}
+
+function mapSupabaseToAuditLog(row) {
+  if (!row) return null;
+  return {
+    auditId: row.audit_id || row.auditId || row.id,
+    timestamp: row.timestamp || row.created_at || '',
+    actor: row.actor || '',
+    role: row.role || '',
+    action: row.action || '',
+    details: row.details || '',
+    mineId: row.mine_id || row.mineId || 'MINE-01',
+  };
+}
+
+function mapAuditLogToSupabaseRow(a) {
+  if (!a || !a.auditId) return null;
+  return {
+    audit_id: a.auditId,
+    timestamp: a.timestamp || null,
+    actor: a.actor || null,
+    role: a.role || null,
+    action: a.action || null,
+    details: a.details || null,
+    mine_id: a.mineId || 'MINE-01',
+  };
+}
+
+async function saveAuditLogsToSupabase(logsArr) {
+  if (!logsArr || logsArr.length === 0) return;
+  try {
+    const rows = logsArr.map(mapAuditLogToSupabaseRow).filter(Boolean);
+    const { data, error } = await supabase
+      .from('audit_trail')
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error('Supabase audit_trail insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save audit logs exception:', err);
+  }
+}
+
+async function saveAuditLogToSupabase(a) {
+  if (!a || !a.auditId) return;
+  try {
+    const row = mapAuditLogToSupabaseRow(a);
+    const { data, error } = await supabase
+      .from('audit_trail')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('Supabase single audit_log insert error:', error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Supabase save audit log exception:', err);
+  }
+}
+
+function mapSupabaseToSosAlert(row) {
+  if (!row) return null;
+  return {
+    alertId: row.alert_id || row.alertId || row.id,
+    inspectorName: row.inspector_name || row.inspectorName || '',
+    inspectorId: row.inspector_id || row.inspectorId || '',
+    mineName: row.mine_name || row.mineName || '',
+    mineId: row.mine_id || row.mineId || '',
+    timestamp: row.timestamp || row.created_at || '',
+    status: row.status || 'ACTIVE',
+    alertType: 'SOS',
+    acknowledgedBy: row.acknowledged_by || row.acknowledgedBy || null,
+    acknowledgedAt: row.acknowledged_at || row.acknowledged_time || row.acknowledgedAt || null,
+    acknowledgedTime: row.acknowledged_time || row.acknowledged_at || row.acknowledgedTime || null,
+  };
+}
+
+function mapSosAlertToSupabaseRow(sos) {
+  if (!sos || !sos.alertId) return null;
+  return {
+    alert_id: sos.alertId,
+    inspector_name: sos.inspectorName || null,
+    inspector_id: sos.inspectorId || null,
+    mine_name: sos.mineName || null,
+    mine_id: sos.mineId || null,
+    timestamp: sos.timestamp || null,
+    status: sos.status || 'ACTIVE',
+    acknowledged_by: sos.acknowledgedBy || null,
+    acknowledged_at: sos.acknowledgedAt || sos.acknowledgedTime || null,
+  };
+}
+
+async function saveSosAlertToSupabase(sos) {
+  if (!sos || !sos.alertId) return;
+  try {
+    const row = mapSosAlertToSupabaseRow(sos);
+    console.log('[Supabase SOS] Inserting row into sos_alerts table:', row);
+    const { data, error } = await supabase
+      .from('sos_alerts')
+      .insert(row)
+      .select();
+
+    if (error) {
+      console.error('❌ [Supabase SOS] Insert FAILURE:', error.message || error);
+    } else {
+      console.log('✅ [Supabase SOS] Insert SUCCESS:', data);
+    }
+    return data;
+  } catch (err) {
+    console.error('❌ [Supabase SOS] Insert EXCEPTION:', err);
+  }
+}
+
+async function updateSosAlertInSupabase(alertId, acknowledgedBy, acknowledgedTime) {
+  if (!alertId) return;
+  try {
+    console.log(`[Supabase SOS] Updating alert ${alertId} in sos_alerts table to ACKNOWLEDGED...`);
+    const { data, error } = await supabase
+      .from('sos_alerts')
+      .update({
+        status: 'ACKNOWLEDGED',
+        acknowledged_by: acknowledgedBy || 'Mine Officer',
+        acknowledged_at: acknowledgedTime || new Date().toISOString()
+      })
+      .eq('alert_id', alertId)
+      .select();
+
+    if (error) {
+      console.error('❌ [Supabase SOS] Update FAILURE:', error.message || error);
+    } else {
+      console.log('✅ [Supabase SOS] Update SUCCESS:', data);
+    }
+    return data;
+  } catch (err) {
+    console.error('❌ [Supabase SOS] Update EXCEPTION:', err);
+  }
+}
 
 export function DataProvider({ children }) {
   const [mines, setMines] = useState(() => loadFromStorage('mines', DEMO_MINES));
@@ -31,20 +695,13 @@ export function DataProvider({ children }) {
   const [alerts, setAlerts] = useState(() => loadFromStorage('alerts', DEMO_ALERTS));
   const [correctiveActions, setCorrectiveActions] = useState(() => loadFromStorage('correctiveActions', DEMO_CORRECTIVE_ACTIONS));
   const [auditTrail, setAuditTrail] = useState(() => loadFromStorage('auditTrail', DEMO_AUDIT_TRAIL));
-  const [sosAlerts, setSosAlerts] = useState(() => loadFromStorage('sosAlerts', DEMO_SOS_ALERTS || []));
+  const [sosAlerts, setSosAlerts] = useState(() => loadFromStorage('sos_alerts', []));
+  const sosRealtimeChannelRef = useRef(null);
 
   function loadFromStorage(key, fallback) {
     const saved = localStorage.getItem(STORAGE_KEY_PREFIX + key);
     if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (key === 'certificates' && Array.isArray(parsed) && parsed.length < 50 && Array.isArray(fallback)) {
-          // Merge user-created certificates with updated fallback certificates
-          const userCreated = parsed.filter(p => !fallback.some(f => f.certificateId === p.certificateId));
-          return [...userCreated, ...fallback];
-        }
-        return parsed;
-      } catch (e) { /* fallback */ }
+      try { return JSON.parse(saved); } catch (e) { /* fallback */ }
     }
     return fallback;
   }
@@ -59,86 +716,494 @@ export function DataProvider({ children }) {
     localStorage.setItem(STORAGE_KEY_PREFIX + 'alerts', JSON.stringify(alerts));
     localStorage.setItem(STORAGE_KEY_PREFIX + 'correctiveActions', JSON.stringify(correctiveActions));
     localStorage.setItem(STORAGE_KEY_PREFIX + 'auditTrail', JSON.stringify(auditTrail));
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'sosAlerts', JSON.stringify(sosAlerts));
+    localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(sosAlerts));
   }, [mines, workers, certificates, inspections, violations, alerts, correctiveActions, auditTrail, sosAlerts]);
 
-  // Real-Time Cross-Tab / Window & Supabase Cloud Realtime Listener for SOS Emergencies
+  // BroadcastChannel for 0ms instant real-time sync across tabs/windows
   useEffect(() => {
-    // 1. Supabase Cloud Realtime Stream (Cross-Laptop & Cross-Device Delivery)
-    const unsubscribeSupabase = sosRealtimeService.subscribeToIncomingSOS({
-      onNewSOS: (newCloudAlert) => {
-        setSosAlerts(prev => {
-          if (prev.some(a => a.alertId === newCloudAlert.alertId)) return prev;
-          return [newCloudAlert, ...prev];
-        });
+    let bc;
+    if ('BroadcastChannel' in window) {
+      bc = new BroadcastChannel('mineguard_sos_channel');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.type === 'SOS_UPDATED' && Array.isArray(event.data.sosAlerts)) {
+          console.log('📡 [BroadcastChannel] Received instant SOS update:', event.data.sosAlerts);
+          setSosAlerts(event.data.sosAlerts);
+        }
+      };
+    }
+    return () => {
+      if (bc) bc.close();
+    };
+  }, []);
 
-        // Push into general critical alerts feed
-        setAlerts(prev => [
-          {
-            alertId: `ALT-${Date.now().toString().slice(-4)}`,
-            type: 'EMERGENCY_SOS',
-            severity: 'CRITICAL',
-            title: `🚨 EMERGENCY SOS: ${newCloudAlert.mineName}`,
-            description: `Critical emergency alert dispatched by Inspector ${newCloudAlert.inspectorName} (${newCloudAlert.inspectorId}) in ${newCloudAlert.mineName}.`,
-            message: `Emergency SOS triggered by Inspector ${newCloudAlert.inspectorName} in ${newCloudAlert.mineName}.`,
-            relatedEntity: newCloudAlert.alertId,
-            mineId: newCloudAlert.mineId || 'MINE-01',
-            createdDate: new Date().toISOString(),
-            timestamp: newCloudAlert.displayTime || new Date().toLocaleTimeString('en-GB'),
-            status: 'UNREAD',
-            isRead: false,
-            targetRoles: ['officer', 'management', 'authority']
-          },
-          ...prev
-        ]);
-      },
-      onUpdateSOS: (updatedCloudAlert) => {
-        setSosAlerts(prev => prev.map(a => 
-          (a.alertId === updatedCloudAlert.alertId || a.dbId === updatedCloudAlert.dbId)
-            ? { ...a, ...updatedCloudAlert }
-            : a
-        ));
+  const broadcastSOSUpdate = (updatedList) => {
+    if ('BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('mineguard_sos_channel');
+        bc.postMessage({ type: 'SOS_UPDATED', sosAlerts: updatedList });
+        bc.close();
+      } catch (e) {
+        console.warn('BroadcastChannel error:', e);
+      }
+    }
+  };
+
+  // Subscribe to Supabase Realtime changes & Broadcast events on 'mineguard_global_sos_channel'
+  useEffect(() => {
+    async function fetchInitialSosAlerts() {
+      try {
+        const { data, error } = await supabase
+          .from('sos_alerts')
+          .select('*')
+          .order('timestamp', { ascending: false });
+
+        if (error) {
+          console.warn('⚠️ [Supabase SOS] Fetch initial sos_alerts notice:', error.message || error);
+        } else if (data) {
+          const mapped = data.map(mapSupabaseToSosAlert).filter(Boolean);
+          setSosAlerts(mapped);
+          localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(mapped));
+        }
+      } catch (err) {
+        console.warn('⚠️ [Supabase SOS] Exception fetching initial sos_alerts:', err);
+      }
+    }
+
+    fetchInitialSosAlerts();
+
+    const channel = supabase.channel('mineguard_global_sos_channel', {
+      config: {
+        broadcast: { self: true }
       }
     });
 
-    // 2. BroadcastChannel for same-device cross-tab communication
-    const handleBroadcast = (event) => {
-      if (!event.data) return;
-      if (event.data.type === 'SOS_TRIGGERED' && event.data.alert) {
-        setSosAlerts(prev => {
-          if (prev.some(a => a.alertId === event.data.alert.alertId)) return prev;
-          return [event.data.alert, ...prev];
-        });
-      } else if (event.data.type === 'SOS_ACKNOWLEDGED' && event.data.alertId) {
-        setSosAlerts(prev => prev.map(a => 
-          a.alertId === event.data.alertId 
-            ? { ...a, status: 'ACKNOWLEDGED', acknowledgedBy: event.data.acknowledgedBy, acknowledgedTime: event.data.acknowledgedTime }
-            : a
-        ));
-      }
-    };
+    sosRealtimeChannelRef.current = channel;
 
-    if (sosBroadcastChannel) {
-      sosBroadcastChannel.addEventListener('message', handleBroadcast);
-    }
+    channel
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sos_alerts' },
+        (payload) => {
+          console.log(`🔔 [Supabase Postgres Realtime] Event Received [${payload.eventType}]:`, payload);
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newAlert = mapSupabaseToSosAlert(payload.new);
+            if (newAlert) {
+              setSosAlerts((prev) => {
+                const updated = prev.some((a) => a.alertId === newAlert.alertId)
+                  ? prev.map((a) => (a.alertId === newAlert.alertId ? newAlert : a))
+                  : [newAlert, ...prev];
+                localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+                return updated;
+              });
+            }
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedAlert = mapSupabaseToSosAlert(payload.new);
+            if (updatedAlert) {
+              setSosAlerts((prev) => {
+                const updated = prev.map((a) => (a.alertId === updatedAlert.alertId ? updatedAlert : a));
+                localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+                return updated;
+              });
+            }
+          }
+        }
+      )
+      .on('broadcast', { event: 'sos_trigger' }, ({ payload }) => {
+        console.log('🚨 [Supabase Realtime Broadcast] SOS received from remote device:', payload);
+        if (payload && payload.alertId) {
+          setSosAlerts((prev) => {
+            if (prev.some((a) => a.alertId === payload.alertId)) return prev;
+            const updated = [payload, ...prev];
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      })
+      .on('broadcast', { event: 'sos_acknowledge' }, ({ payload }) => {
+        console.log('✅ [Supabase Realtime Broadcast] Acknowledgment received from remote device:', payload);
+        if (payload && payload.alertId) {
+          setSosAlerts((prev) => {
+            const updated = prev.map((a) => (a.alertId === payload.alertId ? { ...a, ...payload } : a));
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      })
+      .subscribe((status, err) => {
+        console.log(`📡 [Supabase Realtime Status] Channel status: ${status}`, err || '');
+      });
 
-    const handleStorage = (e) => {
-      if (e.key === STORAGE_KEY_PREFIX + 'sosAlerts' && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setSosAlerts(parsed);
-        } catch (err) {}
-      }
-    };
-    window.addEventListener('storage', handleStorage);
+    const pollInterval = setInterval(() => {
+      fetchInitialSosAlerts();
+    }, 2000);
 
     return () => {
-      if (unsubscribeSupabase) unsubscribeSupabase();
-      if (sosBroadcastChannel) {
-        sosBroadcastChannel.removeEventListener('message', handleBroadcast);
-      }
-      window.removeEventListener('storage', handleStorage);
+      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
+      sosRealtimeChannelRef.current = null;
     };
+  }, []);
+
+  // Live Supabase DB Polling & Sync for Violations, Inspections, Certificates, Actions, Alerts across devices
+  useEffect(() => {
+    async function syncAllSupabaseTables() {
+      try {
+        // Violations
+        const { data: vData } = await supabase.from('violations').select('*').order('reported_date', { ascending: false });
+        if (vData && vData.length > 0) {
+          const mappedV = vData.map(mapSupabaseToViolation).filter(Boolean);
+          setViolations(prev => {
+            const map = new Map();
+            mappedV.forEach(item => map.set(item.violationId, item));
+            prev.forEach(item => { if (!map.has(item.violationId)) map.set(item.violationId, item); });
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'violations', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // Inspections
+        const { data: iData } = await supabase.from('inspections').select('*').order('date', { ascending: false });
+        if (iData && iData.length > 0) {
+          const mappedI = iData.map(mapSupabaseToInspection).filter(Boolean);
+          setInspections(prev => {
+            const map = new Map();
+            mappedI.forEach(item => map.set(item.inspectionId, item));
+            prev.forEach(item => { if (!map.has(item.inspectionId)) map.set(item.inspectionId, item); });
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'inspections', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // Certificates
+        const { data: cData } = await supabase.from('certificates').select('*');
+        if (cData && cData.length > 0) {
+          const mappedC = cData.map(mapSupabaseToCertificate).filter(Boolean);
+          setCertificates(prev => {
+            const map = new Map();
+            mappedC.forEach(item => map.set(item.certificateId, item));
+            prev.forEach(item => { if (!map.has(item.certificateId)) map.set(item.certificateId, item); });
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'certificates', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // Corrective Actions
+        const { data: caData } = await supabase.from('corrective_actions').select('*').order('created_date', { ascending: false });
+        if (caData && caData.length > 0) {
+          const mappedCA = caData.map(mapSupabaseToCorrectiveAction).filter(Boolean);
+          setCorrectiveActions(prev => {
+            const map = new Map();
+            mappedCA.forEach(item => map.set(item.actionId, item));
+            prev.forEach(item => { if (!map.has(item.actionId)) map.set(item.actionId, item); });
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'correctiveActions', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // System Alerts
+        const { data: aData } = await supabase.from('alerts').select('*').order('created_date', { ascending: false });
+        if (aData && aData.length > 0) {
+          const mappedA = aData.map(mapSupabaseToAlert).filter(Boolean);
+          setAlerts(prev => {
+            const map = new Map();
+            mappedA.forEach(item => map.set(item.alertId, item));
+            prev.forEach(item => { if (!map.has(item.alertId)) map.set(item.alertId, item); });
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEY_PREFIX + 'alerts', JSON.stringify(merged));
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.warn('Supabase DB multi-table poll error:', err);
+      }
+    }
+
+    syncAllSupabaseTables();
+    const interval = setInterval(syncAllSupabaseTables, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen for storage events to synchronize data across multiple tabs/windows in real time
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key && e.key.startsWith(STORAGE_KEY_PREFIX)) {
+        const key = e.key.replace(STORAGE_KEY_PREFIX, '');
+        if (e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (key === 'mines') setMines(parsed);
+            if (key === 'workers') setWorkers(parsed);
+            if (key === 'certificates') setCertificates(parsed);
+            if (key === 'inspections') setInspections(parsed);
+            if (key === 'violations') setViolations(parsed);
+            if (key === 'alerts') setAlerts(parsed);
+            if (key === 'correctiveActions') setCorrectiveActions(parsed);
+            if (key === 'auditTrail') setAuditTrail(parsed);
+            if (key === 'sos_alerts') setSosAlerts(parsed);
+          } catch (err) {
+            console.error('Storage sync error:', err);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Fetch and seed mines from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseMines() {
+      try {
+        // Ensure 5 demo mines exist in Supabase
+        await saveMinesToSupabase(DEMO_MINES);
+
+        // Fetch mines from Supabase
+        const { data, error } = await supabase.from('mines').select('*');
+        if (error) {
+          console.error('Error fetching mines from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToMine).filter(Boolean);
+          setMines(prev => {
+            const map = new Map();
+            prev.forEach(m => map.set(m.mineId, m));
+            mapped.forEach(m => {
+              const existing = map.get(m.mineId);
+              map.set(m.mineId, {
+                ...existing,
+                ...m,
+                zones: existing?.zones || m.zones || []
+              });
+            });
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing mines with Supabase:', err);
+      }
+    }
+
+    initSupabaseMines();
+  }, []);
+
+  // Fetch and seed workers from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseWorkers() {
+      try {
+        // Ensure demo workers exist in Supabase
+        await saveWorkersToSupabase(DEMO_WORKERS);
+
+        // Fetch workers from Supabase
+        const { data, error } = await supabase.from('workers').select('*');
+        if (error) {
+          console.error('Error fetching workers from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToWorker).filter(Boolean);
+          setWorkers(prev => {
+            const map = new Map();
+            prev.forEach(w => map.set(w.workerId, w));
+            mapped.forEach(w => map.set(w.workerId, w));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing workers with Supabase:', err);
+      }
+    }
+
+    initSupabaseWorkers();
+  }, []);
+
+  // Fetch and seed certificates from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseCertificates() {
+      try {
+        // Ensure demo certificates exist in Supabase
+        await saveCertificatesToSupabase(DEMO_CERTIFICATES);
+
+        // Fetch certificates from Supabase
+        const { data, error } = await supabase.from('certificates').select('*');
+        if (error) {
+          console.error('Error fetching certificates from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToCertificate).filter(Boolean);
+          setCertificates(prev => {
+            const map = new Map();
+            prev.forEach(c => map.set(c.certificateId, c));
+            mapped.forEach(c => map.set(c.certificateId, c));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing certificates with Supabase:', err);
+      }
+    }
+
+    initSupabaseCertificates();
+  }, []);
+
+  // Fetch and seed inspections from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseInspections() {
+      try {
+        // Ensure demo inspections exist in Supabase
+        await saveInspectionsToSupabase(DEMO_INSPECTIONS);
+
+        // Fetch inspections from Supabase
+        const { data, error } = await supabase.from('inspections').select('*');
+        if (error) {
+          console.error('Error fetching inspections from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToInspection).filter(Boolean);
+          setInspections(prev => {
+            const map = new Map();
+            prev.forEach(i => map.set(i.inspectionId, i));
+            mapped.forEach(i => map.set(i.inspectionId, i));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing inspections with Supabase:', err);
+      }
+    }
+
+    initSupabaseInspections();
+  }, []);
+
+  // Fetch violations from Supabase table on mount
+  useEffect(() => {
+    async function fetchSupabaseViolations() {
+      try {
+        await saveViolationsToSupabase(DEMO_VIOLATIONS);
+        const { data, error } = await supabase.from('violations').select('*');
+        if (error) {
+          console.error('Error fetching violations from Supabase:', error);
+          return;
+        }
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToViolation).filter(Boolean);
+          setViolations(prev => {
+            const map = new Map();
+            prev.forEach(v => map.set(v.violationId, v));
+            mapped.forEach(v => map.set(v.violationId, v));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception fetching violations from Supabase:', err);
+      }
+    }
+
+    fetchSupabaseViolations();
+  }, []);
+
+  // Fetch and seed corrective actions from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseCorrectiveActions() {
+      try {
+        // Ensure demo corrective actions exist in Supabase
+        await saveCorrectiveActionsToSupabase(DEMO_CORRECTIVE_ACTIONS);
+
+        // Fetch corrective actions from Supabase
+        const { data, error } = await supabase.from('corrective_actions').select('*');
+        if (error) {
+          console.error('Error fetching corrective actions from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToCorrectiveAction).filter(Boolean);
+          setCorrectiveActions(prev => {
+            const map = new Map();
+            prev.forEach(ca => map.set(ca.actionId, ca));
+            mapped.forEach(ca => map.set(ca.actionId, ca));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing corrective actions with Supabase:', err);
+      }
+    }
+
+    initSupabaseCorrectiveActions();
+  }, []);
+
+  // Fetch and seed alerts from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseAlerts() {
+      try {
+        // Ensure demo alerts exist in Supabase
+        await saveAlertsToSupabase(DEMO_ALERTS);
+
+        // Fetch alerts from Supabase
+        const { data, error } = await supabase.from('alerts').select('*');
+        if (error) {
+          console.error('Error fetching alerts from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToAlert).filter(Boolean);
+          setAlerts(prev => {
+            const map = new Map();
+            prev.forEach(a => map.set(a.alertId, a));
+            mapped.forEach(a => map.set(a.alertId, a));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing alerts with Supabase:', err);
+      }
+    }
+
+    initSupabaseAlerts();
+  }, []);
+
+  // Fetch and seed audit trail from Supabase on mount
+  useEffect(() => {
+    async function initSupabaseAuditTrail() {
+      try {
+        // Ensure demo audit logs exist in Supabase
+        await saveAuditLogsToSupabase(DEMO_AUDIT_TRAIL);
+
+        // Fetch audit trail from Supabase
+        const { data, error } = await supabase.from('audit_trail').select('*');
+        if (error) {
+          console.error('Error fetching audit trail from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const mapped = data.map(mapSupabaseToAuditLog).filter(Boolean);
+          setAuditTrail(prev => {
+            const map = new Map();
+            prev.forEach(a => map.set(a.auditId, a));
+            mapped.forEach(a => map.set(a.auditId, a));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.error('Exception syncing audit trail with Supabase:', err);
+      }
+    }
+
+    initSupabaseAuditTrail();
   }, []);
 
   // Recalculate Mine Scores dynamically based on a multi-factor weighted compliance model
@@ -215,6 +1280,7 @@ export function DataProvider({ children }) {
     };
 
     setInspections(prev => [newInspection, ...prev]);
+    saveInspectionToSupabase(newInspection);
 
     // Add audit log
     addAuditLog(actorName, 'INSPECTOR', 'INSPECTION_SUBMITTED', 
@@ -252,7 +1318,6 @@ export function DataProvider({ children }) {
       ...violationData,
       violationId: newId,
       date: getTodayDateString(),
-      reportedDate: getTodayDateString(),
       status: 'OPEN',
       riskScore: aiRisk.score,
       riskLevel: aiRisk.level,
@@ -262,6 +1327,7 @@ export function DataProvider({ children }) {
 
     const updatedViolations = [newViolation, ...violations];
     setViolations(updatedViolations);
+    saveViolationToSupabase(newViolation);
 
     // Automatically generate system Alert for Mine Officer and Management
     const newAlert = {
@@ -277,6 +1343,7 @@ export function DataProvider({ children }) {
       targetRoles: ['officer', 'management', 'authority']
     };
     setAlerts(prev => [newAlert, ...prev]);
+    saveAlertToSupabase(newAlert);
 
     // Audit trail
     addAuditLog(actorName, 'INSPECTOR', 'REPORT_VIOLATION', 
@@ -305,6 +1372,7 @@ export function DataProvider({ children }) {
 
     const updatedActions = [newAction, ...correctiveActions];
     setCorrectiveActions(updatedActions);
+    saveCorrectiveActionToSupabase(newAction);
 
     // Update violation status
     const updatedViolations = violations.map(v => 
@@ -313,6 +1381,8 @@ export function DataProvider({ children }) {
         : v
     );
     setViolations(updatedViolations);
+    const targetV = updatedViolations.find(v => v.violationId === actionData.violationId);
+    if (targetV) saveViolationToSupabase(targetV);
 
     // Audit trail
     addAuditLog(actorName, 'OFFICER', 'CREATE_CORRECTIVE_ACTION', 
@@ -341,6 +1411,8 @@ export function DataProvider({ children }) {
       return ca;
     });
     setCorrectiveActions(updatedActions);
+    const targetAction = updatedActions.find(ca => ca.actionId === actionId);
+    if (targetAction) saveCorrectiveActionToSupabase(targetAction);
 
     let updatedViolations = violations;
     if (updateData.status === 'VERIFICATION REQUIRED' && linkedViolationId) {
@@ -350,6 +1422,8 @@ export function DataProvider({ children }) {
           : v
       );
       setViolations(updatedViolations);
+      const targetV = updatedViolations.find(v => v.violationId === linkedViolationId);
+      if (targetV) saveViolationToSupabase(targetV);
 
       // Alert Inspector for Verification Sign-Off
       const verifyAlert = {
@@ -365,6 +1439,7 @@ export function DataProvider({ children }) {
         targetRoles: ['inspector']
       };
       setAlerts(prev => [verifyAlert, ...prev]);
+      saveAlertToSupabase(verifyAlert);
     }
 
     addAuditLog(actorName, 'OFFICER', 'UPDATE_CORRECTIVE_ACTION', 
@@ -391,6 +1466,7 @@ export function DataProvider({ children }) {
       updatedCerts = [{ ...certData }, ...certificates];
     }
     setCertificates(updatedCerts);
+    saveCertificateToSupabase(certData);
 
     let updatedViolations = violations;
     let updatedActions = correctiveActions;
@@ -403,6 +1479,8 @@ export function DataProvider({ children }) {
           : v
       );
       setViolations(updatedViolations);
+      const targetV = updatedViolations.find(v => v.violationId === linkedViolationId);
+      if (targetV) saveViolationToSupabase(targetV);
 
       updatedActions = correctiveActions.map(ca => 
         ca.violationId === linkedViolationId
@@ -430,6 +1508,7 @@ export function DataProvider({ children }) {
         targetRoles: ['inspector']
       };
       setAlerts(prev => [verifyAlert, ...prev]);
+      saveAlertToSupabase(verifyAlert);
     }
 
     addAuditLog(actorName, 'OFFICER', 'CERTIFICATE_UPLOADED', 
@@ -448,6 +1527,8 @@ export function DataProvider({ children }) {
         : v
     );
     setViolations(updatedViolations);
+    const resolvedViolation = updatedViolations.find(v => v.violationId === violationId);
+    if (resolvedViolation) saveViolationToSupabase(resolvedViolation);
 
     const updatedActions = correctiveActions.map(ca => 
       ca.violationId === violationId 
@@ -478,6 +1559,7 @@ export function DataProvider({ children }) {
       targetRoles: ['officer', 'management', 'authority']
     };
     setAlerts(prev => [resolvedAlert, ...prev]);
+    saveAlertToSupabase(resolvedAlert);
 
     recalculateMineScores(updatedViolations, certificates, updatedActions, workers);
   };
@@ -499,6 +1581,7 @@ export function DataProvider({ children }) {
     };
 
     setAlerts(prev => [newAlert, ...prev]);
+    saveAlertToSupabase(newAlert);
 
     addAuditLog(actorName, 'AUTHORITY', 'ISSUE_DIRECTIVE', 
       `Issued Compliance Notice to ${directiveData.mineId}: "${directiveData.title}"`,
@@ -522,128 +1605,142 @@ export function DataProvider({ children }) {
     };
 
     setAuditTrail(prev => [newEntry, ...prev]);
+    saveAuditLogToSupabase(newEntry);
   };
 
-  // Send Emergency SOS Alert (Triggered by Inspector -> Supabase Realtime Cloud)
-  const sendSOSAlert = (sosData) => {
-    const now = new Date();
-    const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-    
-    const alertId = sosData.alertId || `SOS-${now.getFullYear()}-${Date.now().toString().slice(-4)}`;
-    const newAlert = {
-      alertId,
-      alertType: 'SOS',
-      inspectorId: sosData.inspectorId || 'INS-001',
-      inspectorName: sosData.inspectorName || 'Anita Kulkarni',
-      mineId: sosData.mineId || 'MINE-01',
-      mineName: sosData.mineName || 'Demo Mine Alpha',
-      zoneName: sosData.zoneName || 'Active Underground Working Area',
-      location: sosData.location || `${sosData.mineName || 'Demo Mine Alpha'} (${sosData.zoneName || 'North Shaft'})`,
-      timestamp: now.toISOString(),
-      displayTime: timeStr,
+  // Send Emergency SOS Alert via Supabase Realtime & Resilient Channels
+  const sendSOSAlert = async ({ inspectorName, inspectorId, mineName, mineId }) => {
+    const timestampStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const newSos = {
+      alertId: `SOS-${Date.now().toString().slice(-6)}`,
+      inspectorName: inspectorName || 'Inspector',
+      inspectorId: inspectorId || 'INS-001',
+      mineName: mineName || 'Demo Mine Alpha',
+      mineId: mineId || 'MINE-01',
+      timestamp: timestampStr,
       status: 'ACTIVE',
-      severity: 'CRITICAL',
-      notes: sosData.notes || 'Immediate statutory mine evacuation and rescue response requested by Field Inspector.'
+      alertType: 'SOS',
+      acknowledgedBy: null,
+      acknowledgedAt: null,
+      acknowledgedTime: null
     };
 
-    setSosAlerts(prev => [newAlert, ...prev]);
+    const updated = [newSos, ...sosAlerts.filter(a => a.alertId !== newSos.alertId)];
+    setSosAlerts(updated);
+    localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+    broadcastSOSUpdate(updated);
 
-    // Push into general critical alerts feed
-    const systemAlert = {
-      alertId: `ALT-${Date.now().toString().slice(-4)}`,
-      type: 'EMERGENCY_SOS',
+    // Send Supabase Realtime Broadcast message to ALL connected devices worldwide
+    if (sosRealtimeChannelRef.current) {
+      try {
+        sosRealtimeChannelRef.current.send({
+          type: 'broadcast',
+          event: 'sos_trigger',
+          payload: newSos
+        });
+        console.log('📡 [Supabase Realtime Broadcast] SOS broadcast sent to remote devices.');
+      } catch (e) {
+        console.warn('Supabase Realtime broadcast send error:', e);
+      }
+    }
+
+    // Await database insert
+    await saveSosAlertToSupabase(newSos);
+
+    // Also add high-priority alert and audit trail
+    const auditEntry = {
+      auditId: `AUD-${Date.now().toString().slice(-6)}`,
+      timestamp: timestampStr,
+      actor: `${newSos.inspectorName} (${newSos.inspectorId})`,
+      role: 'Inspector',
+      action: 'EMERGENCY_SOS_SENT',
+      details: `🚨 EMERGENCY SOS ALERT dispatched for ${newSos.mineName} by ${newSos.inspectorName}. Immediate Mine Officer attention required.`,
+      mineId: newSos.mineId
+    };
+
+    setAuditTrail(prev => [auditEntry, ...prev]);
+    saveAuditLogToSupabase(auditEntry);
+
+    const sysAlert = {
+      alertId: `ALT-${Date.now().toString().slice(-6)}`,
+      mineId: newSos.mineId,
+      title: `🚨 EMERGENCY SOS: ${newSos.mineName}`,
+      message: `Emergency SOS triggered by ${newSos.inspectorName} (${newSos.inspectorId}) at ${newSos.mineName}. Immediate action required!`,
       severity: 'CRITICAL',
-      title: `🚨 EMERGENCY SOS: ${newAlert.mineName}`,
-      description: `Critical emergency alert dispatched by Inspector ${newAlert.inspectorName} (${newAlert.inspectorId}) in ${newAlert.mineName}. Immediate action required!`,
-      message: `Emergency SOS triggered by Inspector ${newAlert.inspectorName} in ${newAlert.mineName}.`,
-      relatedEntity: alertId,
-      mineId: newAlert.mineId,
-      createdDate: now.toISOString(),
-      timestamp: timeStr,
-      status: 'UNREAD',
+      timestamp: timestampStr,
       isRead: false,
       targetRoles: ['officer', 'management', 'authority']
     };
-    setAlerts(prev => [systemAlert, ...prev]);
+    setAlerts(prev => [sysAlert, ...prev]);
+    saveAlertToSupabase(sysAlert);
 
-    // Log to Tamper-Evident Audit Trail
-    addAuditLog(
-      `${newAlert.inspectorName} (${newAlert.inspectorId})`,
-      'INSPECTOR',
-      'TRIGGER_EMERGENCY_SOS',
-      `Triggered Priority-1 Emergency SOS alert for ${newAlert.mineName}. Real-time dispatch sent to Mine Officers and Central Command.`,
-      newAlert.mineId
-    );
-
-    // Cross-Laptop / Cross-Device Cloud Dispatch via Supabase Realtime
-    sosRealtimeService.dispatchSOS({
-      inspectorId: newAlert.inspectorId,
-      inspectorName: newAlert.inspectorName,
-      mineId: newAlert.mineId,
-      mineName: newAlert.mineName,
-      zoneName: newAlert.zoneName,
-      notes: newAlert.notes
-    }).catch(err => console.warn('Supabase Realtime SOS dispatch notice:', err));
-
-    // Local BroadcastChannel for same-laptop tabs
-    if (sosBroadcastChannel) {
-      sosBroadcastChannel.postMessage({ type: 'SOS_TRIGGERED', alert: newAlert });
-    }
-
-    return newAlert;
+    return newSos;
   };
 
-  // Acknowledge Emergency SOS Alert (By Mine Officer or Management)
-  const acknowledgeSOSAlert = (alertId, acknowledgedBy, acknowledgedRole) => {
-    const now = new Date();
-    const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+  // Acknowledge Emergency SOS Alert via Supabase Realtime & Resilient Channels
+  const acknowledgeSOSAlert = (alertId, acknowledgedBy) => {
+    const ackTime = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const ackPayload = {
+      alertId,
+      status: 'ACKNOWLEDGED',
+      acknowledgedBy: acknowledgedBy || 'Mine Officer',
+      acknowledgedAt: ackTime,
+      acknowledgedTime: ackTime
+    };
 
-    let targetMine = 'MINE-01';
-    setSosAlerts(prev => prev.map(a => {
-      if (a.alertId === alertId || a.dbId === alertId) {
-        targetMine = a.mineId;
-        const triggerTime = new Date(a.timestamp).getTime();
-        const diffSec = Math.max(1, Math.round((now.getTime() - triggerTime) / 1000));
+    const updated = sosAlerts.map(item => {
+      if (item.alertId === alertId) {
         return {
-          ...a,
-          status: 'ACKNOWLEDGED',
-          acknowledgedBy: acknowledgedBy || 'Rajesh Deshmukh (Mine Safety Officer)',
-          acknowledgedRole: acknowledgedRole || 'OFFICER',
-          acknowledgedTime: timeStr,
-          responseTimeSec: diffSec
+          ...item,
+          ...ackPayload
         };
       }
-      return a;
-    }));
+      return item;
+    });
 
-    addAuditLog(
-      acknowledgedBy || 'Mine Safety Officer',
-      acknowledgedRole || 'OFFICER',
-      'ACKNOWLEDGE_SOS',
-      `Acknowledged Emergency SOS ${alertId}. Emergency response, safety crews and rescue protocols mobilized for ${targetMine}.`,
-      targetMine
-    );
+    setSosAlerts(updated);
+    localStorage.setItem(STORAGE_KEY_PREFIX + 'sos_alerts', JSON.stringify(updated));
+    broadcastSOSUpdate(updated);
 
-    // Synchronize to Supabase Realtime Cloud
-    sosRealtimeService.acknowledgeSOS(alertId, {
-      actorName: acknowledgedBy,
-      actorRole: acknowledgedRole
-    }).catch(err => console.warn('Supabase Realtime acknowledge sync notice:', err));
-
-    // Broadcast across same-laptop tabs
-    if (sosBroadcastChannel) {
-      sosBroadcastChannel.postMessage({
-        type: 'SOS_ACKNOWLEDGED',
-        alertId,
-        acknowledgedBy: acknowledgedBy || 'Mine Safety Officer',
-        acknowledgedTime: timeStr
-      });
+    // Send Supabase Realtime Broadcast message to ALL connected devices worldwide
+    if (sosRealtimeChannelRef.current) {
+      try {
+        sosRealtimeChannelRef.current.send({
+          type: 'broadcast',
+          event: 'sos_acknowledge',
+          payload: ackPayload
+        });
+        console.log('📡 [Supabase Realtime Broadcast] Acknowledgment broadcast sent to remote devices.');
+      } catch (e) {
+        console.warn('Supabase Realtime broadcast acknowledge error:', e);
+      }
     }
+
+    updateSosAlertInSupabase(alertId, acknowledgedBy, ackTime);
+
+    // Add to audit trail
+    const auditEntry = {
+      auditId: `AUD-${Date.now().toString().slice(-6)}`,
+      timestamp: ackTime,
+      actor: acknowledgedBy || 'Mine Officer',
+      role: 'Officer',
+      action: 'EMERGENCY_SOS_ACKNOWLEDGED',
+      details: `✅ EMERGENCY SOS ${alertId} acknowledged by ${acknowledgedBy || 'Mine Officer'}.`,
+      mineId: 'MINE-01'
+    };
+
+    setAuditTrail(prev => [auditEntry, ...prev]);
+    saveAuditLogToSupabase(auditEntry);
   };
 
   // Mark Alert as Read
   const markAlertRead = (alertId) => {
-    setAlerts(prev => prev.map(a => a.alertId === alertId ? { ...a, status: 'READ' } : a));
+    setAlerts(prev => {
+      const next = prev.map(a => a.alertId === alertId ? { ...a, status: 'READ', isRead: true } : a);
+      const targetAlert = next.find(a => a.alertId === alertId);
+      if (targetAlert) saveAlertToSupabase(targetAlert);
+      return next;
+    });
   };
 
   // Reset Demo Data to initial state
@@ -656,8 +1753,6 @@ export function DataProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY_PREFIX + 'alerts');
     localStorage.removeItem(STORAGE_KEY_PREFIX + 'correctiveActions');
     localStorage.removeItem(STORAGE_KEY_PREFIX + 'auditTrail');
-    localStorage.removeItem(STORAGE_KEY_PREFIX + 'sosAlerts');
-
     setMines(DEMO_MINES);
     setWorkers(DEMO_WORKERS);
     setCertificates(DEMO_CERTIFICATES);
@@ -666,7 +1761,6 @@ export function DataProvider({ children }) {
     setAlerts(DEMO_ALERTS);
     setCorrectiveActions(DEMO_CORRECTIVE_ACTIONS);
     setAuditTrail(DEMO_AUDIT_TRAIL);
-    setSosAlerts(DEMO_SOS_ALERTS || []);
   };
 
   return (
@@ -677,10 +1771,12 @@ export function DataProvider({ children }) {
       inspections,
       violations,
       alerts,
+      sosAlerts,
       correctiveActions,
       auditTrail,
-      sosAlerts,
       equipment: [],
+      sendSOSAlert,
+      acknowledgeSOSAlert,
       createInspection,
       reportViolation,
       createCorrectiveAction,
@@ -689,8 +1785,6 @@ export function DataProvider({ children }) {
       verifyAndResolveViolation,
       issueDirective,
       markAlertRead,
-      sendSOSAlert,
-      acknowledgeSOSAlert,
       resetDemoData,
       recalculateMineScores
     }}>

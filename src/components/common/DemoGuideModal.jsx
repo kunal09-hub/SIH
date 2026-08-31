@@ -8,7 +8,7 @@ export default function DemoGuideModal({ isOpen, onClose }) {
       num: '1',
       role: '👷 INSPECTOR',
       title: 'Conduct Inspection & Detect Compliance Issue',
-      desc: '1. Select any coal mine (e.g. "Demo Mine Alpha") and operational area.\n2. Execute the digital SOP checklist: mark passed items.\n3. Mark a failing compliance parameter (e.g. expired competency certificate or equipment issue).\n4. Click "Submit" -> Report Violation -> Observe the explainable AI-Assisted Risk Score (e.g. 86/100) generated with specific risk factor breakdown.',
+      desc: '1. Select any coal mine (e.g. "Mine Alpha") and operational area.\n2. Execute the digital SOP checklist: mark passed items.\n3. Mark a failing compliance parameter (e.g. expired competency certificate or equipment issue).\n4. Click "Submit" -> Report Violation -> Observe the AI-Assisted Risk Score generated with specific risk factor breakdown.',
       highlight: 'Demonstrates digital field inspection, explainable AI risk scoring, and automated alert dispatch.'
     },
     {
@@ -29,48 +29,48 @@ export default function DemoGuideModal({ isOpen, onClose }) {
       num: '4',
       role: '🏢 MANAGEMENT & 🏛️ REGULATORY',
       title: 'Executive Oversight & Cross-Mine Surveillance',
-      desc: '1. Switch to Management: Watch the mine compliance score improve realistically (e.g. 84% -> 88%), risk drop, and trend charts update.\n2. Switch to Regulatory Authority: Inspect cross-mine compliance benchmarks across 5 coalfields (e.g. high-risk flags like Mine Gamma at 61%), issue regulatory notices, and review the tamper-evident Audit Trail.',
+      desc: '1. Switch to Management: Watch the mine compliance score improve realistically, risk drop, and trend charts update.\n2. Switch to Regulatory Authority: Inspect cross-mine compliance benchmarks, issue regulatory notices, and review the tamper-evident Audit Trail.',
       highlight: 'Proves centralized connected governance and visibility across all organizational tiers.'
     },
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="🏆 System Walkthrough & Demonstration Flow" subtitle="Recommended step-by-step presentation script to demonstrate the complete compliance lifecycle" maxWidth="max-w-3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Operational Compliance Lifecycle Walkthrough" subtitle="End-to-end statutory workflow demonstrating inspection, risk evaluation, remediation, and verification" maxWidth="max-w-2xl">
       <div className="space-y-4">
-        <div className="bg-mgAmber-50 border border-amber-200 p-3 rounded-lg text-xs text-mgAmber-600">
-          <strong>Core Presentation Message:</strong> "MineGuard demonstrates an explainable, closed-loop compliance and safety governance system for coal mines. When a hazard or expired credential is detected, the AI evaluates its risk, alerts mine management, tracks corrective remediation, and requires dual-party verification before updating executive compliance scores."
+        <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-xl text-xs text-blue-900">
+          <strong>System Governance Flow:</strong> MineGuard establishes an explainable, closed-loop compliance and safety governance system for coal mines. When a hazard or expired credential is detected, the platform calculates its risk, alerts mine management, tracks corrective remediation, and requires dual-party verification before updating executive compliance scores.
         </div>
 
         <div className="space-y-3 mt-4">
           {steps.map((s, idx) => (
-            <div key={idx} className="bg-white border border-enterprise-border p-4 rounded-xl relative overflow-hidden shadow-sm">
+            <div key={idx} className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-2xl relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-mgBlue-600 text-white text-xs font-bold flex items-center justify-center font-mono">
+                  <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white text-xs font-bold flex items-center justify-center font-mono">
                     {s.num}
                   </span>
-                  <span className="text-xs font-bold text-mgBlue-600 uppercase tracking-wider">{s.role}</span>
+                  <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{s.role}</span>
                 </div>
-                <span className="text-[11px] text-enterprise-text-muted font-mono">Step {s.num} of 4</span>
+                <span className="text-[11px] text-[#94A3B8] font-mono">Step {s.num} of 4</span>
               </div>
 
-              <h4 className="text-sm font-bold text-enterprise-text mt-2">{s.title}</h4>
-              <p className="text-xs text-enterprise-text-secondary whitespace-pre-line mt-1.5 leading-relaxed bg-gray-50 p-2.5 rounded-lg border border-enterprise-border font-mono">
+              <h4 className="text-sm font-bold text-[#172033] mt-2">{s.title}</h4>
+              <p className="text-xs text-[#475569] whitespace-pre-line mt-1.5 leading-relaxed bg-white p-3 rounded-xl border border-[#E2E8F0] font-mono">
                 {s.desc}
               </p>
 
-              <div className="mt-2 text-[11px] text-mgGreen-600 font-medium flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-mgGreen-600" />
+              <div className="mt-2 text-[11px] text-emerald-700 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span><strong>Key Takeaway:</strong> {s.highlight}</span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="pt-3 border-t border-enterprise-border flex justify-end">
+        <div className="pt-3 border-t border-[#E2E8F0] flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-mgBlue-600 hover:bg-mgBlue-500 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+            className="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
           >
             Start Demonstration
           </button>

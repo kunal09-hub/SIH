@@ -3,7 +3,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../common/StatCard';
 import Badge from '../common/Badge';
-import { Landmark, Scale, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Landmark, Scale, AlertTriangle, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
 import MineComparisonTable from '../management/MineComparisonTable';
 import MineDetailModal from '../management/MineDetailModal';
 import IssueDirectiveModal from './IssueDirectiveModal';
@@ -21,26 +21,28 @@ export default function RegulatoryDashboard({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <span>Regulatory Authority — Compliance Surveillance</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-mgGreen-100 text-mgGreen-600 border border-green-200 font-mono font-bold">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight">
+              Regulatory Authority Surveillance
+            </h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">
               National Oversight
             </span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
-            Regional Director: <strong className="text-enterprise-text">{currentUser?.name}</strong> • AI-Assisted Compliance Monitoring (Prototype)
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
+            Regional Director: <strong>{currentUser?.name}</strong> • National Mining Surveillance & Statutory Enforcement
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowDirectiveModal(true)}
-            className="px-3.5 py-2 bg-mgRed-600 hover:bg-mgRed-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
           >
             <Scale className="w-4 h-4" />
-            <span>Issue Regulatory Compliance Notice</span>
+            <span>Issue Compliance Directive</span>
           </button>
         </div>
       </div>
@@ -64,36 +66,38 @@ export default function RegulatoryDashboard({ onNavigate }) {
         <StatCard
           title="Critical Violations"
           value={criticalViolations.length}
-          subtitle="Immediate Life Hazard"
+          subtitle="Immediate Life Hazard Breaches"
           icon={Scale}
           color="amber"
         />
         <StatCard
           title="Total Monitored Units"
           value={mines.length}
-          subtitle="Opencast & Underground"
+          subtitle="Opencast & Underground Concessions"
           icon={ShieldCheck}
           color="blue"
         />
       </div>
 
-      {/* High-Risk Spotlight Banner */}
+      {/* High-Risk Spotlight Banner (e.g. Mine Gamma at 61%) */}
       {highRiskMines.length > 0 && (
-        <div className="p-4 bg-mgRed-50 border border-red-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-mgRed-600 shrink-0 mt-0.5" />
+        <div className="p-4 sm:p-5 bg-red-50/80 border border-red-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2 rounded-xl bg-red-100 text-red-600 shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
             <div>
-              <h4 className="text-sm font-bold text-mgRed-600">
+              <h4 className="text-sm font-bold text-red-800">
                 Statutory Warning: {highRiskMines[0].mineName} Compliance Index at {highRiskMines[0].complianceScore}%
               </h4>
-              <p className="text-xs text-enterprise-text-secondary mt-1 leading-relaxed">
-                Demo Mine Gamma has repeatedly flagged ventilation and blasting safety concerns. AI-assisted analysis recommends a focused audit inspection.
+              <p className="text-xs text-[#475569] mt-1 leading-relaxed">
+                Mine Gamma has repeatedly flagged ventilation and blasting safety concerns. AI-assisted analysis recommends a focused audit inspection.
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowDirectiveModal(true)}
-            className="px-4 py-2 bg-mgRed-600 hover:bg-mgRed-500 text-white font-bold text-xs rounded-lg shadow-sm shrink-0 transition-colors"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-sm shrink-0 transition-colors"
           >
             Issue Formal Notice
           </button>

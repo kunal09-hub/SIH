@@ -26,13 +26,15 @@ export default function AuditTrailView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <History className="w-5 h-5 text-purple-600" />
-            <span>Mine Compliance Governance Audit Trail</span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight flex items-center gap-2">
+              <History className="w-6 h-6 text-blue-600" />
+              <span>Governance Audit Trail</span>
+            </h2>
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
             Immutable chronological record of inspections, violations, alerts, and corrective action handoffs
           </p>
         </div>
@@ -40,13 +42,13 @@ export default function AuditTrailView() {
       </div>
 
       {/* Filters */}
-      <div className="mg-card p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+      <div className="bg-white border border-[#E2E8F0] p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs shadow-sm">
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter by Actor Role</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter by Actor Role</label>
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All Roles</option>
             <option value="INSPECTOR">Inspector</option>
@@ -57,36 +59,38 @@ export default function AuditTrailView() {
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Search Audit Logs</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Search Audit Logs</label>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search action, actor, ticket ID..."
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none font-mono"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 font-mono"
           />
         </div>
       </div>
 
       {/* Log Feed */}
-      <div className="mg-card overflow-hidden shadow-card">
-        <div className="divide-y divide-enterprise-border">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-sm">
+        <div className="divide-y divide-[#E2E8F0]">
           {filteredLogs.map((entry) => (
-            <div key={entry.auditId} className="p-4 hover:bg-gray-50/50 transition-colors flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-xs font-mono text-purple-600 shrink-0 mt-0.5">
+            <div key={entry.auditId} className="p-4 sm:p-5 hover:bg-[#F8FAFC] transition-colors flex items-start gap-3.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xs font-mono text-blue-600 shrink-0 mt-0.5">
                 <History className="w-4 h-4" />
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-enterprise-text text-xs">{entry.actor}</span>
+                    <span className="font-bold text-[#172033] text-xs">{entry.actor}</span>
                     <Badge size="sm">{entry.role}</Badge>
-                    <span className="text-[10px] font-mono font-bold text-mgBlue-600">[{entry.action}]</span>
+                    <span className="text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                      [{entry.action}]
+                    </span>
                   </div>
-                  <span className="font-mono text-[10px] text-enterprise-text-muted">{entry.timestamp}</span>
+                  <span className="font-mono text-[11px] text-[#64748B]">{entry.timestamp}</span>
                 </div>
-                <p className="text-xs text-enterprise-text-secondary leading-relaxed font-sans">{entry.details}</p>
-                <p className="text-[10px] text-enterprise-text-muted font-mono">Entity ID: {entry.auditId} • Target Mine: {entry.mineId}</p>
+                <p className="text-xs text-[#334155] leading-relaxed font-sans">{entry.details}</p>
+                <p className="text-[10px] text-[#94A3B8] font-mono">Entity ID: {entry.auditId} • Target Mine: {entry.mineId}</p>
               </div>
             </div>
           ))}

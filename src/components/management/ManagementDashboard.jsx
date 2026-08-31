@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../common/StatCard';
-import { Building2, Layers, AlertTriangle, ShieldCheck, Activity, Download } from 'lucide-react';
+import Badge from '../common/Badge';
+import { Building2, Layers, AlertTriangle, ShieldCheck, Activity, FileText, ArrowRight, Download } from 'lucide-react';
 import { ComplianceTrendChart, RiskDistributionChart } from './RiskTrendCharts';
 import MineComparisonTable from './MineComparisonTable';
 import MineDetailModal from './MineDetailModal';
 
 export default function ManagementDashboard({ onNavigate }) {
-  const { mines, violations } = useData();
+  const { mines, violations, correctiveActions, certificates, workers } = useData();
   const { currentUser } = useAuth();
   const [selectedMine, setSelectedMine] = useState(null);
 
@@ -20,24 +21,26 @@ export default function ManagementDashboard({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <span>Corporate Mining Safety & Governance Executive Board</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-600 border border-purple-200 font-mono font-bold">
-              HQ Dashboard
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight">
+              Executive Safety & Governance Board
+            </h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 font-mono font-bold">
+              HQ Directorate
             </span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
-            Executive Director: <strong className="text-enterprise-text">{currentUser?.name}</strong> • Multi-Mine Compliance Oversight
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
+            Executive Director: <strong>{currentUser?.name}</strong> • Multi-Concession Compliance Portfolio
           </p>
         </div>
 
         <button
           onClick={() => onNavigate('compliance-reports')}
-          className="px-4 py-2 bg-white hover:bg-gray-50 text-enterprise-text border border-enterprise-border font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
+          className="px-4 py-2.5 bg-white hover:bg-slate-50 text-[#172033] border border-[#CBD5E1] font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
         >
-          <Download className="w-4 h-4 text-purple-600" />
+          <Download className="w-4 h-4 text-blue-600" />
           <span>Export Compliance Scorecard</span>
         </button>
       </div>
@@ -76,17 +79,17 @@ export default function ManagementDashboard({ onNavigate }) {
 
       {/* Visual Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 mg-card p-5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-enterprise-text mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-mgBlue-600" />
+        <div className="lg:col-span-2 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#172033] mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-blue-600" />
             <span>4-Week Compliance Score Trajectory by Mine</span>
           </h3>
           <ComplianceTrendChart mines={mines} />
         </div>
 
-        <div className="mg-card p-5 flex flex-col justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-enterprise-text mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-mgAmber-600" />
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#172033] mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
             <span>Violation Severity Breakdown</span>
           </h3>
           <RiskDistributionChart violations={violations} />

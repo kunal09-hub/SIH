@@ -32,20 +32,22 @@ export default function CertificateManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <FileCheck className="w-5 h-5 text-mgGreen-600" />
-            <span>Master Certificate Database & Expiry Tracker</span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
-            Track all safety mining competencies, upcoming expiry thresholds, and renewal archives
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight flex items-center gap-2">
+              <FileCheck className="w-6 h-6 text-emerald-600" />
+              <span>Certificate Database & Expiry Tracker</span>
+            </h2>
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
+            Track all statutory mining competencies, upcoming expiry thresholds, and renewal records
           </p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
+          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Upload / Register Certificate</span>
@@ -53,17 +55,17 @@ export default function CertificateManager() {
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mg-card p-3.5 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white border border-[#E2E8F0] p-4 rounded-2xl text-xs shadow-sm">
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter by Mine</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter by Mine</label>
           <select
             value={selectedMine}
             disabled={currentUser?.role === 'OFFICER'}
             onChange={(e) => setSelectedMine(e.target.value)}
-            className={`w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed border-amber-500/40 text-mgAmber-600 font-semibold' : ''}`}
+            className={`w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed bg-slate-100 font-semibold' : ''}`}
           >
             {currentUser?.role === 'OFFICER' ? (
-              <option value={currentUser.mineId || 'MINE-01'}>Demo Mine Alpha (Assigned Unit)</option>
+              <option value={currentUser.mineId || 'MINE-01'}>Mine Alpha (Assigned Unit)</option>
             ) : (
               <>
                 <option value="ALL">All Mines ({certificates.length} Records)</option>
@@ -73,11 +75,11 @@ export default function CertificateManager() {
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Status Filter</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Status Filter</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All Statuses ({certificates.length})</option>
             <option value="VALID">VALID</option>
@@ -87,11 +89,11 @@ export default function CertificateManager() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Category Filter</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Category Filter</label>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All 5 Categories</option>
             <option value="Electrical Competency Certificate">Electrical Competency</option>
@@ -103,22 +105,22 @@ export default function CertificateManager() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Search Records</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Search Records</label>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search worker or Cert ID..."
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none font-mono"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 font-mono"
           />
         </div>
       </div>
 
       {/* Certificates Table */}
-      <div className="mg-card overflow-hidden shadow-card">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 border-b border-enterprise-border text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted">
+            <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
               <tr>
                 <th className="p-3.5">Certificate ID & Category</th>
                 <th className="p-3.5">Worker Name</th>
@@ -129,33 +131,33 @@ export default function CertificateManager() {
                 <th className="p-3.5">Issuing Authority</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-enterprise-border">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredCerts.map((c) => {
                 const st = calculateCertificateStatus(c.expiryDate);
                 const linkedMine = mines.find(m => m.mineId === c.mineId);
                 return (
-                  <tr key={c.certificateId} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={c.certificateId} className="hover:bg-[#F8FAFC] transition-colors">
                     <td className="p-3.5">
-                      <p className="font-mono font-bold text-enterprise-text">{c.certificateId}</p>
-                      <p className="text-[11px] text-mgBlue-600 font-medium mt-0.5">{c.certificateType}</p>
+                      <p className="font-mono font-bold text-[#172033]">{c.certificateId}</p>
+                      <p className="text-[11px] text-blue-600 font-semibold mt-0.5">{c.certificateType}</p>
                     </td>
                     <td className="p-3.5">
-                      <p className="font-semibold text-enterprise-text">{c.workerName}</p>
-                      <p className="text-[10px] text-enterprise-text-muted font-mono">{c.workerId}</p>
+                      <p className="font-semibold text-[#172033]">{c.workerName}</p>
+                      <p className="text-[10px] text-[#64748B] font-mono">{c.workerId}</p>
                     </td>
-                    <td className="p-3.5 text-enterprise-text-secondary">
-                      {linkedMine?.mineName || 'Demo Mine'}
+                    <td className="p-3.5 text-[#475569]">
+                      {linkedMine?.mineName || 'Mine Alpha'}
                     </td>
-                    <td className="p-3.5 font-mono text-enterprise-text-muted">
+                    <td className="p-3.5 font-mono text-[#64748B]">
                       {formatDate(c.issueDate)}
                     </td>
-                    <td className={`p-3.5 font-mono font-bold ${st.status === 'EXPIRED' ? 'text-mgRed-600' : 'text-enterprise-text-secondary'}`}>
+                    <td className={`p-3.5 font-mono font-bold ${st.status === 'EXPIRED' ? 'text-red-600' : 'text-[#334155]'}`}>
                       {formatDate(c.expiryDate)}
                     </td>
                     <td className="p-3.5">
                       <Badge size="sm">{st.status}</Badge>
                     </td>
-                    <td className="p-3.5 text-enterprise-text-muted text-[11px] max-w-xs truncate">
+                    <td className="p-3.5 text-[#64748B] text-[11px] max-w-xs truncate">
                       {c.issuingAuthority}
                     </td>
                   </tr>

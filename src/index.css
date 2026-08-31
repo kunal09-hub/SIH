@@ -3,59 +3,69 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg-main: #f7f9fc;
+    --surface-card: #ffffff;
+    --surface-secondary: #f1f5f9;
+    --border-color: #e2e8f0;
+    --text-primary: #172033;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --primary-blue: #2563eb;
+    --primary-blue-hover: #1d4ed8;
+  }
+
   body {
-    @apply bg-enterprise-bg text-enterprise-text font-sans;
+    background-color: #f7f9fc;
+    color: #172033;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Custom scrollbars - Professional Light Theme */
+/* ─── Clean Light Scrollbars ─── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f2f5;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c4c9d1;
-  border-radius: 3px;
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #94a3b8;
 }
 
-/* Enterprise utility classes */
-.mg-card {
-  @apply bg-white rounded-lg border border-enterprise-border shadow-card;
+/* ─── Card Utility Classes ─── */
+.light-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
-.mg-card-hover {
-  @apply bg-white rounded-lg border border-enterprise-border shadow-card hover:shadow-card-hover transition-shadow duration-200;
+.light-card-interactive {
+  transition: all 0.2s ease-in-out;
 }
 
-.mg-section-title {
-  @apply text-sm font-bold text-enterprise-text uppercase tracking-wider;
+.light-card-interactive:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
 }
 
-.mg-btn-primary {
-  @apply px-4 py-2.5 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-semibold text-sm rounded-lg transition-colors;
+/* ─── Focus Ring Utility ─── */
+.focus-ring {
+  outline: none;
 }
 
-.mg-btn-secondary {
-  @apply px-4 py-2.5 bg-white hover:bg-gray-50 text-enterprise-text font-semibold text-sm rounded-lg border border-enterprise-border transition-colors;
-}
-
-.mg-input {
-  @apply w-full px-3 py-2.5 bg-white border border-enterprise-border rounded-lg text-sm text-enterprise-text placeholder-enterprise-text-muted focus:outline-none focus:ring-2 focus:ring-mgBlue-500 focus:border-mgBlue-500 transition-colors;
-}
-
-.mg-select {
-  @apply w-full px-3 py-2.5 bg-white border border-enterprise-border rounded-lg text-sm text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500 focus:border-mgBlue-500 transition-colors;
-}
-
-.mg-label {
-  @apply block text-sm font-medium text-enterprise-text mb-1.5;
+.focus-ring:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 8px;
 }

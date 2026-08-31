@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { useOffline } from '../../context/OfflineContext';
 import { formatDate } from '../../utils/dateHelpers';
 import Badge from '../common/Badge';
-import { AlertTriangle, Filter, Search, ShieldAlert, Sparkles, Plus, CloudUpload, WifiOff } from 'lucide-react';
+import { AlertTriangle, Filter, Search, ShieldAlert, Sparkles, Plus } from 'lucide-react';
 import ReportViolationModal from './ReportViolationModal';
 
 export default function ViolationsListView() {
   const { violations, mines } = useData();
   const { currentUser } = useAuth();
-  const { offlineQueue } = useOffline();
   const [filterSeverity, setFilterSeverity] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterMine, setFilterMine] = useState(currentUser?.role === 'OFFICER' ? (currentUser.mineId || 'MINE-01') : 'ALL');
@@ -33,20 +31,22 @@ export default function ViolationsListView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-enterprise-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h2 className="text-xl font-bold text-enterprise-text flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-mgRed-600" />
-            <span>Mine Compliance Violations & Defect Registry</span>
-          </h2>
-          <p className="text-xs text-enterprise-text-muted mt-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-2xl font-extrabold text-[#172033] tracking-tight flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+              <span>Violations & Defect Registry</span>
+            </h2>
+          </div>
+          <p className="text-xs text-[#64748B] mt-1">
             Complete database of reported non-compliances, AI risk rankings, and remediation progress
           </p>
         </div>
 
         <button
           onClick={() => setShowReportModal(true)}
-          className="px-4 py-2 bg-mgRed-600 hover:bg-mgRed-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-colors"
+          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 self-start sm:self-auto transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Report New Violation</span>
@@ -54,17 +54,17 @@ export default function ViolationsListView() {
       </div>
 
       {/* Filter Bar */}
-      <div className="mg-card p-3.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+      <div className="bg-white border border-[#E2E8F0] p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-sm">
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter by Mine</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter by Mine</label>
           <select
             value={filterMine}
             disabled={currentUser?.role === 'OFFICER'}
             onChange={(e) => setFilterMine(e.target.value)}
-            className={`w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed border-amber-500/40 text-mgAmber-600 font-semibold' : ''}`}
+            className={`w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 ${currentUser?.role === 'OFFICER' ? 'opacity-80 cursor-not-allowed bg-slate-100 font-semibold' : ''}`}
           >
             {currentUser?.role === 'OFFICER' ? (
-              <option value={currentUser.mineId || 'MINE-01'}>Demo Mine Alpha (Assigned Unit)</option>
+              <option value={currentUser.mineId || 'MINE-01'}>Mine Alpha (Assigned Unit)</option>
             ) : (
               <>
                 <option value="ALL">All Mines</option>
@@ -75,11 +75,11 @@ export default function ViolationsListView() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter Severity</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter Severity</label>
           <select
             value={filterSeverity}
             onChange={(e) => setFilterSeverity(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All Severities</option>
             <option value="CRITICAL">CRITICAL</option>
@@ -90,11 +90,11 @@ export default function ViolationsListView() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Filter Status</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Filter Status</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600"
           >
             <option value="ALL">All Statuses</option>
             <option value="OPEN">OPEN</option>
@@ -105,89 +105,63 @@ export default function ViolationsListView() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-enterprise-text-muted mb-1">Search Keywords</label>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Search Keywords</label>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search worker, ID, hazard..."
-            className="w-full px-2.5 py-1.5 bg-gray-50 border border-enterprise-border rounded-lg text-enterprise-text text-xs focus:outline-none font-mono"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-[#172033] text-xs focus:outline-none focus:border-blue-600 font-mono"
           />
         </div>
       </div>
 
       {/* Violations List Cards */}
       <div className="space-y-3">
-        {/* Pending Offline Items Banner/Cards */}
-        {offlineQueue.filter(item => item.type === 'VIOLATION').map((item) => (
-          <div key={item.tempId} className="mg-card border-l-4 border-l-mgAmber-500 bg-amber-50/40 p-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-amber-200">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-mgAmber-800">{item.tempId}</span>
-                <span className="text-xs text-enterprise-text-muted font-semibold">{item.payload.mineName || item.payload.mineId} — {item.payload.area}</span>
-                <Badge size="sm">{item.payload.severity}</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-mono">
-                  <CloudUpload className="w-3 h-3" /> PENDING SYNC (OFFLINE)
-                </span>
-                <span className="text-[11px] text-enterprise-text-muted font-mono">{item.timestamp}</span>
-              </div>
-            </div>
-
-            <div className="mt-2 text-xs">
-              <p className="font-bold text-mgAmber-700">{item.payload.category}</p>
-              <p className="text-enterprise-text mt-0.5">{item.payload.description}</p>
-              <p className="text-[10px] text-enterprise-text-muted mt-1 font-mono">
-                Saved locally on device • Will synchronize when connection is online
-              </p>
-            </div>
-          </div>
-        ))}
         {filteredViolations.length === 0 ? (
-          <p className="p-8 text-center text-enterprise-text-muted mg-card text-xs">
+          <p className="p-12 text-center text-[#64748B] bg-white border border-[#E2E8F0] rounded-2xl text-xs shadow-sm">
             No violations match the selected filters.
           </p>
         ) : (
           filteredViolations.map((v) => (
-            <div key={v.violationId} className="mg-card hover:shadow-card-hover p-4 transition-all">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-enterprise-border">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-enterprise-text">{v.violationId}</span>
-                  <span className="text-xs text-enterprise-text-muted font-semibold">{v.mineName} — {v.area}</span>
+            <div key={v.violationId} className="bg-white border border-[#E2E8F0] hover:border-slate-300 p-5 rounded-2xl transition-all shadow-sm space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono font-bold text-[#172033]">{v.violationId}</span>
+                  <span className="text-xs text-[#64748B] font-medium">{v.mineName} — {v.area}</span>
                   <Badge size="sm">{v.severity}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge size="sm">{v.status}</Badge>
-                  <span className="text-[11px] text-enterprise-text-muted font-mono">{formatDate(v.date || v.reportedDate)}</span>
+                  <span className="text-[11px] text-[#64748B] font-mono">{formatDate(v.date)}</span>
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 space-y-2">
-                  <p className="text-xs font-bold text-mgAmber-600">{v.category}</p>
-                  <p className="text-xs text-enterprise-text leading-relaxed">{v.description}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-1.5">
+                  <p className="text-xs font-bold text-blue-700">{v.category}</p>
+                  <p className="text-xs text-[#334155] leading-relaxed">{v.description}</p>
                   
                   {v.workerName && (
-                    <p className="text-[11px] text-enterprise-text-muted">
+                    <p className="text-[11px] text-[#64748B] pt-1">
                       <strong>Linked Personnel:</strong> {v.workerName} ({v.workerId})
                     </p>
                   )}
 
-                  <p className="text-[10px] text-enterprise-text-muted">
-                    Reported by: <span className="text-enterprise-text-secondary font-semibold">{v.reportedBy}</span>
+                  <p className="text-[10px] text-[#94A3B8]">
+                    Reported by: <span className="text-[#64748B] font-medium">{v.reportedBy}</span>
                   </p>
                 </div>
 
                 {/* AI Risk Card Column */}
-                <div className="p-3 bg-gray-50 rounded-lg border border-enterprise-border space-y-1.5">
+                <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-enterprise-text flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-mgAmber-600" /> AI Risk:
+                    <span className="text-[11px] font-bold text-[#172033] flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" /> AI Risk Score:
                     </span>
-                    <span className="text-xs font-mono font-bold text-mgRed-600">{v.riskScore || 75}/100</span>
+                    <span className="text-xs font-mono font-bold text-red-600">{v.riskScore || 75}/100</span>
                   </div>
-                  <p className="text-[10px] text-enterprise-text-muted leading-relaxed">
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
                     {v.aiExplanation || 'High risk statutory certification deficiency.'}
                   </p>
                 </div>

@@ -1,61 +1,68 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
-import { Bell, LogOut, Shield, AlertTriangle, CheckCircle, Menu, X } from 'lucide-react';
+import { Bell, LogOut, Shield, User, Clock, AlertTriangle, CheckCircle, Menu, X, Search } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateHelpers';
 
 export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpen }) {
   const { currentUser, logout } = useAuth();
   const { alerts, markAlertRead } = useData();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Filter alerts relevant to current role
   const roleKey = currentUser?.role?.toLowerCase();
   const userAlerts = alerts.filter(a => !a.targetRoles || a.targetRoles.includes(roleKey));
-  const unreadCount = userAlerts.filter(a => a.status === 'UNREAD' || a.isRead === false).length;
+  const unreadCount = userAlerts.filter(a => a.status === 'UNREAD').length;
 
   return (
-    <header className="bg-navy-800 px-4 sm:px-6 py-2.5 flex items-center justify-between z-30 sticky top-0 shadow-nav">
-      {/* Brand & Logo + Mobile Menu Toggle */}
-      <div className="flex items-center gap-3">
+    <header className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 h-[68px] flex items-center justify-between z-30 sticky top-0 shadow-[0_1px_3px_rgba(15,23,42,0.04)] select-none">
+      {/* Left Brand & Mobile Menu Toggle */}
+      <div className="flex items-center gap-3 sm:gap-4">
         {onToggleMobileMenu && (
           <button
             onClick={onToggleMobileMenu}
-            className="lg:hidden p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
+            className="lg:hidden p-2 rounded-lg bg-[#F8FAFC] text-[#475569] hover:text-[#172033] border border-[#E2E8F0] hover:bg-[#F1F5F9] focus:outline-none transition-colors"
             aria-label="Toggle navigation menu"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         )}
 
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('dashboard')}>
-          {/* MineGuard Shield Logo */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white flex items-center justify-center shadow shrink-0">
-            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-navy-800" />
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md shadow-blue-500/20 text-white font-extrabold text-base sm:text-lg shrink-0 border border-blue-400/20">
+            <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-1">
-              MineGuard
-            </h1>
-            <p className="text-[10px] sm:text-[11px] text-white/50 tracking-wide hidden md:block">
-              AI-Based Smart Governance & Compliance Monitoring System for Coal Mines
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-[#172033] flex items-center gap-1">
+                MineGuard
+              </h1>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold border border-blue-200 hidden sm:inline-block">
+                Governance
+              </span>
+            </div>
+            <p className="text-[11px] text-[#64748B] tracking-normal hidden md:block font-medium">
+              Smart Mine Governance & Safety Management System
             </p>
           </div>
         </div>
       </div>
 
       {/* Right User & Notification Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 sm:gap-4">
+        
         {/* Notifications Bell */}
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="relative p-2.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#172033] transition-colors border border-[#E2E8F0]"
             title="Notifications & Alerts"
+            aria-label="Notifications"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] rounded-full bg-mgRed-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#DC2626] text-white text-[9px] font-extrabold flex items-center justify-center shadow-sm animate-pulse">
                 {unreadCount}
               </span>
             )}
@@ -63,31 +70,35 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white border border-enterprise-border shadow-xl z-50 max-h-96 overflow-y-auto">
-              <div className="px-4 py-3 border-b border-enterprise-border flex items-center justify-between">
-                <span className="text-sm font-bold text-enterprise-text">Notifications</span>
-                <span className="text-xs text-enterprise-text-secondary">{unreadCount} Unread</span>
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xl z-50 p-3 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+                <span className="text-xs font-bold text-[#172033] uppercase tracking-wider">System Alerts & Notices</span>
+                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{unreadCount} Unread</span>
               </div>
-              <div className="divide-y divide-enterprise-border">
+              <div className="divide-y divide-[#E2E8F0] mt-2">
                 {userAlerts.length === 0 ? (
-                  <p className="text-sm text-enterprise-text-muted py-6 text-center">No active notifications.</p>
+                  <p className="text-xs text-[#94A3B8] py-5 text-center">No active notifications.</p>
                 ) : (
                   userAlerts.slice(0, 8).map(alert => (
                     <div 
                       key={alert.alertId}
                       onClick={() => markAlertRead(alert.alertId)}
-                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${(alert.status === 'UNREAD' || alert.isRead === false) ? 'bg-mgBlue-50' : ''}`}
+                      className={`py-3 px-2.5 hover:bg-[#F8FAFC] rounded-xl cursor-pointer transition-colors ${alert.status === 'UNREAD' ? 'bg-blue-50/40' : 'opacity-80'}`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2.5">
                         {alert.severity === 'HIGH' || alert.severity === 'CRITICAL' ? (
-                          <AlertTriangle className="w-4 h-4 text-mgRed-500 shrink-0 mt-0.5" />
+                          <div className="p-1 rounded-lg bg-red-50 text-[#DC2626] shrink-0 mt-0.5">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          </div>
                         ) : (
-                          <CheckCircle className="w-4 h-4 text-mgBlue-500 shrink-0 mt-0.5" />
+                          <div className="p-1 rounded-lg bg-blue-50 text-[#2563EB] shrink-0 mt-0.5">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-enterprise-text">{alert.title}</p>
-                          <p className="text-xs text-enterprise-text-secondary mt-0.5 leading-relaxed">{alert.description || alert.message}</p>
-                          <p className="text-xs text-enterprise-text-muted mt-1 font-mono">{formatDateTime(alert.createdDate || alert.timestamp)}</p>
+                          <p className="text-xs font-bold text-[#172033] truncate">{alert.title}</p>
+                          <p className="text-[11px] text-[#64748B] mt-0.5 leading-relaxed">{alert.description}</p>
+                          <p className="text-[10px] text-[#94A3B8] mt-1 font-mono">{formatDateTime(alert.createdDate)}</p>
                         </div>
                       </div>
                     </div>
@@ -100,20 +111,23 @@ export default function Navbar({ onNavigate, onToggleMobileMenu, isMobileMenuOpe
 
         {/* User Card */}
         {currentUser && (
-          <div className="flex items-center gap-3 pl-3 border-l border-white/20">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm text-white font-semibold">
-              {currentUser.name?.charAt(0) || '?'}
+          <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-[#E2E8F0]">
+            <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 font-bold text-sm shadow-sm">
+              <User className="w-4 h-4" />
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-white">
+              <p className="text-xs font-bold text-[#172033] flex items-center gap-1.5">
                 {currentUser.name}
               </p>
-              <p className="text-[11px] text-white/50">{currentUser.designation?.split('(')[0]}</p>
+              <p className="text-[11px] text-[#64748B] font-medium truncate max-w-[140px]">
+                {currentUser.designation || currentUser.role}
+              </p>
             </div>
             <button
               onClick={logout}
-              className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors ml-1"
-              title="Log out"
+              className="p-2 text-[#64748B] hover:text-[#DC2626] hover:bg-red-50 rounded-xl transition-colors ml-0.5"
+              title="Logout session"
+              aria-label="Logout"
             >
               <LogOut className="w-4 h-4" />
             </button>

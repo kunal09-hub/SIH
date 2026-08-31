@@ -1,4 +1,4 @@
-// Seed Dataset for SIH Prototype PS26024
+// Master Database Dataset for MineGuard Enterprise
 // 5 Mines, 20 Zones, 100 Workers, Certificates, Violations, Actions, Alerts, Audit Logs.
 
 export const DEMO_MINES = [
@@ -1625,7 +1625,7 @@ export const DEMO_ACCOUNTS = [
   }
 ];
 
-const explicitCerts = [
+export const DEMO_CERTIFICATES = [
   {
     "certificateId": "CERT-2024-0012",
     "workerId": "W-10001",
@@ -1712,50 +1712,6 @@ const explicitCerts = [
   }
 ];
 
-// Generate standard statutory certificates for all other workers based on their role
-const generatedCerts = DEMO_WORKERS.filter(w => !explicitCerts.some(c => c.workerId === w.workerId)).map((w, idx) => {
-  let certType = 'Mining Safety Training Certificate';
-  let issueDate = '2024-02-10';
-  let expiryDate = '2028-02-10';
-  let auth = 'Central Mining Safety Directorate (Demo)';
-  
-  if (w.role === 'Electrician') {
-    certType = 'Electrical Competency Certificate';
-    auth = 'State Directorate of Electrical & Mining Safety (Demo)';
-    expiryDate = (idx % 7 === 0) ? '2026-09-15' : '2028-06-30';
-  } else if (w.role === 'Operator' || w.role === 'Driver') {
-    certType = 'Equipment Operation Certificate';
-    auth = 'Heavy Machinery & Earthmoving Equipment Board (Demo)';
-    expiryDate = (idx % 5 === 0) ? '2026-09-05' : '2027-11-20';
-  } else if (w.role === 'Supervisor' || w.role === 'Overman' || w.role === 'Sirdar') {
-    certType = 'First Aid & Emergency Response Certificate';
-    auth = 'Directorate General of Mines Safety (DGMS)';
-    expiryDate = '2028-10-15';
-  } else if (w.role === 'Blaster' || w.role === 'Driller') {
-    certType = 'Fire Safety Certificate';
-    auth = 'National Mining Safety Training Institute (Demo)';
-    expiryDate = (idx % 6 === 0) ? '2026-08-20' : '2027-08-20';
-  }
-
-  const certNum = 100 + idx;
-  return {
-    certificateId: `CERT-2025-${String(certNum).padStart(4, '0')}`,
-    workerId: w.workerId,
-    workerName: w.name,
-    certificateType: certType,
-    issueDate,
-    expiryDate,
-    issuingAuthority: auth,
-    documentUrl: `cert_doc_${w.workerId.toLowerCase()}.pdf`,
-    verificationStatus: new Date(expiryDate) < new Date() ? 'EXPIRED' : (new Date(expiryDate) < new Date(Date.now() + 30 * 86400000) ? 'EXPIRING SOON' : 'VALID'),
-    mineId: w.mineId,
-    zoneId: w.zoneId || 'Z1',
-    area: w.area || 'Operational Area'
-  };
-});
-
-export const DEMO_CERTIFICATES = [...explicitCerts, ...generatedCerts];
-
 export const DEMO_INSPECTIONS = [
   {
     "inspectionId": "INSP-2026-001",
@@ -1809,7 +1765,6 @@ export const DEMO_VIOLATIONS = [
     "certificateId": "CERT-2024-0012",
     "description": "Electrician Rahul Patil (W-10001) observed on duty in North Shaft with expired Electrical Competency Certificate (Expired 15-Aug-2026).",
     "reportedBy": "Anita Kulkarni (INS-001)",
-    "date": "2026-08-26",
     "reportedDate": "2026-08-26",
     "status": "OPEN",
     "evidence": "evidence_cert_scan_001.jpg",
@@ -1830,7 +1785,6 @@ export const DEMO_VIOLATIONS = [
     "workerName": "Rohan Pawar",
     "description": "Heavy dumper D-08 reverse safety alarm non-functional during workshop inspection.",
     "reportedBy": "Anita Kulkarni (INS-001)",
-    "date": "2026-08-20",
     "reportedDate": "2026-08-20",
     "status": "OPEN",
     "evidence": "dumper_alarm_defect.jpg",
@@ -1851,7 +1805,6 @@ export const DEMO_VIOLATIONS = [
     "workerName": "Sameer Pawar",
     "description": "Deep shaft continuous methane monitoring sensor calibration overdue by 45 days.",
     "reportedBy": "Anita Kulkarni (INS-001)",
-    "date": "2026-08-18",
     "reportedDate": "2026-08-18",
     "status": "OPEN",
     "evidence": "methane_sensor_log.pdf",
@@ -1896,35 +1849,23 @@ export const DEMO_CORRECTIVE_ACTIONS = [
 export const DEMO_ALERTS = [
   {
     "alertId": "ALT-101",
-    "type": "VIOLATION_REPORTED",
     "mineId": "MINE-01",
     "violationId": "VIO-2026-001",
-    "relatedEntity": "VIO-2026-001",
     "title": "High Risk Violation Reported",
-    "description": "High risk compliance breach (Score 86/100) reported in Demo Mine Alpha (North Shaft). Action required.",
     "message": "High risk compliance breach (Score 86/100) reported in Demo Mine Alpha (North Shaft). Action required.",
     "severity": "HIGH",
-    "createdDate": "2026-08-26T14:32:10.000Z",
     "timestamp": "2026-08-26 14:32:10",
-    "status": "UNREAD",
-    "isRead": false,
-    "targetRoles": ["officer", "management", "authority", "inspector"]
+    "isRead": false
   },
   {
     "alertId": "ALT-102",
-    "type": "VIOLATION_REPORTED",
     "mineId": "MINE-03",
     "violationId": "VIO-2026-003",
-    "relatedEntity": "VIO-2026-003",
     "title": "Critical Ventilation Safety Hazard",
-    "description": "Critical safety breach (Score 92/100) flagged in Demo Mine Gamma. Sensor calibration overdue.",
     "message": "Critical safety breach (Score 92/100) flagged in Demo Mine Gamma. Sensor calibration overdue.",
     "severity": "CRITICAL",
-    "createdDate": "2026-08-18T11:15:00.000Z",
     "timestamp": "2026-08-18 11:15:00",
-    "status": "UNREAD",
-    "isRead": false,
-    "targetRoles": ["officer", "management", "authority", "inspector"]
+    "isRead": false
   }
 ];
 
@@ -1951,23 +1892,15 @@ export const DEMO_AUDIT_TRAIL = [
 
 export const DEMO_SOS_ALERTS = [
   {
-    "alertId": "SOS-2026-001",
-    "alertType": "SOS",
-    "inspectorId": "INS-001",
-    "inspectorName": "Anita Kulkarni",
-    "mineId": "MINE-01",
-    "mineName": "Demo Mine Alpha",
-    "zoneName": "North Shaft - Section B",
-    "location": "North Shaft - Substation 3 (-240m)",
-    "timestamp": "2026-08-28T16:45:00.000Z",
-    "displayTime": "2026-08-28 16:45:00",
-    "status": "ACKNOWLEDGED",
-    "acknowledgedBy": "Rajesh Deshmukh (MO-001)",
-    "acknowledgedRole": "Mine Safety Officer",
-    "acknowledgedTime": "2026-08-28 16:46:12",
-    "responseTimeSec": 72,
-    "severity": "CRITICAL",
-    "notes": "Methane gas sensor spiking in ventilation drift. Evacuation protocol initiated and rescue crew dispatched."
+    alertId: "SOS-2026-001",
+    inspectorName: "Anita Kulkarni",
+    inspectorId: "INS-001",
+    mineName: "Demo Mine Alpha",
+    mineId: "MINE-01",
+    timestamp: "2026-08-28 16:45:12",
+    status: "ACKNOWLEDGED",
+    alertType: "SOS",
+    acknowledgedBy: "Vikram Singh (Officer)",
+    acknowledgedTime: "2026-08-28 16:46:05"
   }
 ];
-

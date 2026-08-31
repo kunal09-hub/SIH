@@ -57,14 +57,13 @@ export default function CreateActionModal({ isOpen, onClose, violation }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="🛡️ Create Corrective Action Plan (CAPA)" subtitle={`Assign remediation action for ${activeViolation?.violationId || 'Open Violation'}`} maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Violation Selector if not fixed */}
         {!violation && (
           <div>
-            <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Select Open Violation to Address</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Select Open Violation to Address</label>
             <select
               value={selectedViolationId}
               onChange={(e) => setSelectedViolationId(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500 font-mono"
+              className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-blue-600 font-mono"
             >
               {openViolations.map(v => (
                 <option key={v.violationId} value={v.violationId}>
@@ -76,66 +75,66 @@ export default function CreateActionModal({ isOpen, onClose, violation }) {
         )}
 
         {activeViolation && (
-          <div className="p-3 bg-gray-50 rounded-xl border border-enterprise-border text-xs space-y-1">
-            <div className="flex justify-between items-center text-enterprise-text-muted font-mono">
-              <span>Violation ID: <strong>{activeViolation.violationId}</strong></span>
-              <span>Mine: <strong>{activeViolation.mineName}</strong> ({activeViolation.area})</span>
+          <div className="p-3.5 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] text-xs space-y-1">
+            <div className="flex justify-between items-center text-[#64748B] font-mono">
+              <span>Violation ID: <strong className="text-[#172033]">{activeViolation.violationId}</strong></span>
+              <span>Mine: <strong className="text-[#172033]">{activeViolation.mineName}</strong> ({activeViolation.area})</span>
             </div>
-            <p className="text-enterprise-text font-medium">{activeViolation.description}</p>
+            <p className="text-[#334155] font-medium">{activeViolation.description}</p>
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Action Title</label>
+          <label className="block text-xs font-semibold text-[#334155] mb-1">Action Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-blue-600"
             required
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Action Description & Directives</label>
+          <label className="block text-xs font-semibold text-[#334155] mb-1">Action Description & Directives</label>
           <textarea
             rows="3"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500"
+            className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-blue-600"
             required
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Assigned Responsible Entity</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Assigned Entity</label>
             <input
               type="text"
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500"
+              className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-blue-600"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Target Due Date</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Target Due Date</label>
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text font-mono focus:outline-none focus:ring-2 focus:ring-mgBlue-500"
+              className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] font-mono focus:outline-none focus:border-blue-600"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-enterprise-text-secondary mb-1">Action Priority</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Priority</label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-enterprise-border rounded-lg text-xs text-enterprise-text focus:outline-none focus:ring-2 focus:ring-mgBlue-500 font-bold"
+              className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs text-[#172033] focus:outline-none focus:border-blue-600 font-bold"
             >
               <option value="CRITICAL">CRITICAL</option>
               <option value="HIGH">HIGH</option>
@@ -145,17 +144,17 @@ export default function CreateActionModal({ isOpen, onClose, violation }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-3 border-t border-enterprise-border">
+        <div className="flex justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-white hover:bg-gray-50 border border-enterprise-border text-enterprise-text-secondary rounded-lg text-xs font-semibold"
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#334155] border border-[#CBD5E1] rounded-xl text-xs font-medium"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-5 py-2 bg-mgBlue-600 hover:bg-mgBlue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-colors"
           >
             <Send className="w-4 h-4" />
             <span>Create Action & Set In-Progress</span>
